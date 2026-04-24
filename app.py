@@ -1,13 +1,12 @@
 # nook control room
-# run: streamlit run nook_app.py
+# run: streamlit run app.py
 
 import streamlit as st
 from datetime import date
-import random
 
 st.set_page_config(page_title="nook control room", layout="wide")
 
-# -------------------- STYLE --------------------
+# -------------------- STYLES --------------------
 
 st.markdown("""
 <style>
@@ -18,7 +17,6 @@ st.markdown("""
     --yellow: #F0A533;
     --red: #BA011A;
     --blue: #0B4B8B;
-    --cream: #FCF5AF;
     --bg: #0E0E0E;
     --card: #141414;
     --text: #F4F2ED;
@@ -34,6 +32,34 @@ html, body, [data-testid="stApp"] {
 /* REMOVE DEFAULT */
 #MainMenu, header, footer {visibility: hidden;}
 .block-container {padding: 2rem; max-width: 1300px;}
+
+/* ---------- SIDEBAR ---------- */
+[data-testid="stSidebar"] {
+    background: #0A0A0A;
+    border-right: 1px solid rgba(255,255,255,0.05);
+}
+
+[data-testid="stSidebar"] * {
+    color: #aaa;
+}
+
+[data-testid="stRadio"] label {
+    font-size: 13px !important;
+    padding: 8px 10px !important;
+    border-radius: 8px !important;
+    transition: all 0.2s;
+}
+
+[data-testid="stRadio"] label:hover {
+    background: rgba(255,255,255,0.05);
+    color: white !important;
+}
+
+[data-testid="stRadio"] input:checked + div {
+    background: rgba(228,79,10,0.15) !important;
+    color: #E44F0A !important;
+    border: 1px solid rgba(228,79,10,0.3);
+}
 
 /* ---------- CARD ---------- */
 .nk-card {
@@ -57,7 +83,6 @@ html, body, [data-testid="stApp"] {
     font-size: 26px;
     font-weight: 700;
 }
-
 .sub {
     font-size: 12px;
     color: #777;
@@ -71,18 +96,9 @@ html, body, [data-testid="stApp"] {
     color: white;
     font-weight: 600;
 }
-
 .stButton button:hover {
     transform: scale(1.03);
     box-shadow: 0 0 15px rgba(228,79,10,0.4);
-}
-
-/* ---------- TAG ---------- */
-.tag {
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-size: 10px;
-    background: rgba(255,255,255,0.05);
 }
 
 /* ---------- STAT ---------- */
@@ -98,7 +114,7 @@ html, body, [data-testid="stApp"] {
 </style>
 """, unsafe_allow_html=True)
 
-# -------------------- DATA --------------------
+# -------------------- STATE --------------------
 
 if "members" not in st.session_state:
     st.session_state.members = [
@@ -122,14 +138,30 @@ def section(title, sub):
     st.markdown(f"<div class='title'>{title}</div>", unsafe_allow_html=True)
     st.markdown(f"<div class='sub'>{sub}</div><br>", unsafe_allow_html=True)
 
-def card(html):
-    st.markdown(f"<div class='nk-card'>{html}</div>", unsafe_allow_html=True)
+def card(content):
+    st.markdown(f"<div class='nk-card'>{content}</div>", unsafe_allow_html=True)
 
-def match_label(score):
-    if score > 80: return "high alignment"
-    if score > 60: return "good fit"
-    if score > 40: return "possible"
-    return "low match"
+# -------------------- SIDEBAR --------------------
+
+with st.sidebar:
+    st.markdown("""
+    <div style="font-size:22px;font-weight:700;">nook</div>
+    <div style="font-size:10px;color:#777;margin-bottom:20px;">
+        control system
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <div style="font-size:10px;color:#E44F0A;margin-bottom:10px;">
+        founder mode
+    </div>
+    """, unsafe_allow_html=True)
+
+    page = st.radio(
+        "",
+        ["control room", "inside", "evenings", "reflections", "insights"],
+        label_visibility="collapsed"
+    )
 
 # -------------------- PAGES --------------------
 
@@ -146,6 +178,7 @@ def control_room():
     """)
 
     cols = st.columns(3)
+
     stats = [
         ("people", len(st.session_state.members)),
         ("evenings", len(st.session_state.evenings)),
@@ -168,10 +201,7 @@ def inside():
     for tag, people in grouped.items():
         st.markdown(f"### {tag}")
         for m in people:
-            card(f"""
-            <b>{m['name']}</b><br>
-            sessions: {m['sessions']}
-            """)
+            card(f"<b>{m['name']}</b><br>sessions: {m['sessions']}")
 
 def evenings():
     section("evenings", "experience design")
@@ -184,28 +214,22 @@ def evenings():
 
     st.markdown("---")
 
-    st.subheader("create new evening")
+    st.subheader("create new")
 
     name = st.text_input("name")
     vibe = st.selectbox("vibe", ["introvert", "social", "mixed"])
 
-    if st.button("add evening"):
+    if st.button("add"):
         st.session_state.evenings.append({"name": name, "vibe": vibe})
         st.rerun()
 
 def reflections():
     section("reflections", "what stayed after")
 
-    with st.form("reflection"):
+    with st.form("form"):
         member = st.selectbox("member", [m["name"] for m in st.session_state.members])
         evening = st.selectbox("evening", [e["name"] for e in st.session_state.evenings])
-        feeling = st.selectbox("feeling", [
-            "felt seen",
-            "warm",
-            "awkward",
-            "surface",
-            "deep"
-        ])
+        feeling = st.selectbox("feeling", ["seen", "warm", "awkward", "surface", "deep"])
         note = st.text_area("note")
 
         if st.form_submit_button("save"):
@@ -216,7 +240,6 @@ def reflections():
                 "note": note,
                 "date": str(date.today())
             })
-            st.success("saved")
             st.rerun()
 
     for r in st.session_state.reflections[::-1]:
@@ -227,29 +250,18 @@ def reflections():
         """)
 
 def insights():
-    section("insights", "system intelligence")
+    section("insights", "system learning")
 
     if not st.session_state.reflections:
         card("no data yet")
         return
 
-    expressive = sum(1 for m in st.session_state.members if m["tag"] == "expressive")
-
     card(f"""
-    expressive users: {expressive}<br>
     total reflections: {len(st.session_state.reflections)}<br>
-    pattern: smaller groups → better feedback
+    insight: smaller groups → better engagement
     """)
 
-# -------------------- NAV --------------------
-
-page = st.sidebar.radio("", [
-    "control room",
-    "inside",
-    "evenings",
-    "reflections",
-    "insights"
-])
+# -------------------- ROUTING --------------------
 
 if page == "control room":
     control_room()
