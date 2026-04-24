@@ -1,6 +1,6 @@
 import json
 from copy import deepcopy
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional
 from uuid import uuid4
@@ -11,28 +11,27 @@ import streamlit as st
 APP_DIR = Path(__file__).resolve().parent
 DATA_FILE = APP_DIR / "nook_data.json"
 
-KLEIN_BLUE = "#4100F5"
-CITRIC = "#CDF54E"
-AQUAMARINE = "#9BF0E7"
-FUCHSIA = "#E637A5"
-TANGERINE = "#FF463B"
-NOOK_BLACK = "#191414"
+FRAME_RED = "#D85C1A"
+PAPER = "#F2E7D8"
+PAPER_ALT = "#FBF4EC"
+INK = "#11100E"
+SOFT_INK = "#6A5D52"
+LINE = "#D7BDA0"
+KLEIN_BLUE = "#11100E"
+CITRIC = "#E8D7C2"
+AQUAMARINE = "#F7EEE3"
+FUCHSIA = "#B14B1C"
+TANGERINE = "#D85C1A"
+NOOK_BLACK = "#11100E"
 ORANGE = TANGERINE
-BG = NOOK_BLACK
-SURFACE = "#231C1B"
-SURFACE_ALT = "#2D2423"
-BORDER = "rgba(155,240,231,0.18)"
-TEXT = "#FFFDF7"
-MUTED = "#DDD5CE"
+BG = FRAME_RED
+SURFACE = PAPER_ALT
+SURFACE_ALT = "#FFFDF8"
+BORDER = "rgba(17,16,14,0.10)"
+TEXT = INK
+MUTED = SOFT_INK
 
-USERS = [
-    {"id": "manju", "name": "Manju Singh", "role": "founder", "password": "founder2026"},
-    {"id": "riya.fac", "name": "Riya Kapoor", "role": "facilitator", "password": "riya123", "fac_id": "f1"},
-    {"id": "aryan.fac", "name": "Aryan Mehta", "role": "facilitator", "password": "aryan123", "fac_id": "f2"},
-    {"id": "sneha.fac", "name": "Sneha Joshi", "role": "facilitator", "password": "sneha123", "fac_id": "f3"},
-    {"id": "rohan.fac", "name": "Rohan Verma", "role": "facilitator", "password": "rohan123", "fac_id": "f4"},
-    {"id": "priya.fac", "name": "Priya Sharma", "role": "facilitator", "password": "priya123", "fac_id": "f5"},
-]
+FOUNDER_ACCOUNT = {"id": "manju", "name": "Manju Singh", "role": "founder", "password": "founder2026"}
 
 DEMO_MEMBERS = [
     {
@@ -256,20 +255,34 @@ DEMO_PAYMENTS = [
 
 
 def default_data() -> Dict:
+    seed = build_large_demo_seed()
     return {
-        "members": deepcopy(DEMO_MEMBERS),
+        "members": deepcopy(seed["members"]),
         "facs": deepcopy(DEMO_FACS),
         "exps": deepcopy(DEMO_EXPERIENCES),
         "leaves": deepcopy(DEMO_LEAVES),
         "msgs": deepcopy(DEMO_MESSAGES),
-        "payments": deepcopy(DEMO_PAYMENTS),
-        "admin": deepcopy(DEMO_ADMIN),
+        "payments": deepcopy(seed["payments"]),
+        "admin": deepcopy(seed["admin"]),
+        "referrals": deepcopy(seed["referrals"]),
+        "private_entries": deepcopy(seed["private_entries"]),
+        "settings": {
+            "razorpay_key_id": "",
+            "razorpay_key_secret": "",
+            "payment_link_base": "",
+            "preferred_ai_api": "OpenAI or Groq",
+            "ops_note": "",
+        },
     }
 
 
 def load_data() -> Dict:
     if DATA_FILE.exists():
-        return json.loads(DATA_FILE.read_text(encoding="utf-8"))
+        try:
+            raw = json.loads(DATA_FILE.read_text(encoding="utf-8"))
+            return hydrate_data(raw)
+        except json.JSONDecodeError:
+            pass
     data = default_data()
     save_data(data)
     return data
@@ -277,6 +290,32 @@ def load_data() -> Dict:
 
 def save_data(data: Dict) -> None:
     DATA_FILE.write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+
+def hydrate_data(raw: Dict) -> Dict:
+    data = default_data()
+    for key, value in raw.items():
+        if key not in data:
+            data[key] = value
+            continue
+        if isinstance(data[key], dict) and isinstance(value, dict):
+            data[key].update(value)
+        elif isinstance(data[key], list) and isinstance(value, list):
+            data[key] = value
+        else:
+            data[key] = value
+    if len(data["members"]) < 40:
+        seed = build_large_demo_seed()
+        data["members"] = deepcopy(seed["members"])
+        data["admin"] = deepcopy(seed["admin"])
+        data["referrals"] = deepcopy(seed["referrals"])
+        if len(data["payments"]) < 8:
+            data["payments"] = deepcopy(seed["payments"])
+    if "private_entries" not in data or not data["private_entries"]:
+        data["private_entries"] = deepcopy(build_large_demo_seed()["private_entries"])
+    if "settings" not in data:
+        data["settings"] = default_data()["settings"]
+    return data
 
 
 def auto_tier(sessions: int) -> str:
@@ -287,6 +326,159 @@ def auto_tier(sessions: int) -> str:
     if sessions >= 2:
         return "ibp"
     return "fo"
+
+
+def build_large_demo_seed() -> Dict[str, object]:
+    names = [
+        "Aditi Rao", "Kabir Sethi", "Naina Joseph", "Rahul Jain", "Ira Sharma", "Vihaan Kapoor", "Mahi Menon", "Arjun Batra",
+        "Samaira Das", "Laksh Malhotra", "Tanya Ghosh", "Raghav Khanna", "Ananya Sen", "Harshita Mehra", "Yash Vora", "Sana Rizvi",
+        "Pranav Iyer", "Kashish Bedi", "Devika Nair", "Aman Arora", "Ishita Bose", "Neel Chawla", "Ritika Dutta", "Aarav Grover",
+        "Suhani Bansal", "Manan Tiwari", "Rhea Thomas", "Kunal Roy", "Pihu Oberoi", "Darsh Patel", "Niharika Ahuja", "Eshan Mathur",
+        "Zoya Mirza", "Ritvik Soni", "Myra Kamat", "Siddhant Kohli", "Ishaan Lamba", "Prisha Anand", "Tara Chhabra", "Rohan Kulkarni",
+    ]
+    budgets = ["Rs 500-800", "Rs 800-1200", "Rs 1200+", "Rs 700-1000"]
+    availability = ["Friday evening", "Saturday evening", "Sunday brunch", "Weekday evening", "Weekend only"]
+    activities = [
+        "art nights, long conversations, cafe hopping",
+        "slow dinners, storytelling, walks",
+        "pottery, sketching, coffee tastings",
+        "board games, city walks, music listening",
+        "quiet brunches, journaling, shared making",
+    ]
+    intents = [
+        "Looking for a warm third place with thoughtful people and better conversation.",
+        "I want curated social plans without loud networking energy.",
+        "Would love a smaller room where I can meet people gradually and come back often.",
+        "Searching for a community that feels aesthetic, calm, and emotionally safe.",
+        "I want something intentional instead of generic event-company vibes.",
+    ]
+    cafes = ["Leafy rooftop cafe", "Ceramic studio", "Old city walk route", "Minimal coffee bar", "Hidden supper spot"]
+    messages = [
+        "Happy to start with a simple beginner session.",
+        "I can also be considered for premium experiences later.",
+        "Usually more comfortable in smaller groups.",
+        "Would love something creative or conversation-first.",
+        "Open to being on the waitlist if it is a good fit.",
+    ]
+    members: List[Dict] = []
+    admin: Dict[str, Dict] = {}
+    for idx, name in enumerate(names, start=1):
+        first = name.split(" ")[0].lower()
+        member_id = f"m{idx:02d}"
+        sessions = idx % 6
+        source = "referral" if idx % 5 == 0 else "organic"
+        members.append(
+            {
+                "id": member_id,
+                "name": name,
+                "email": f"{first}{idx}@example.com",
+                "phone": f"98765{idx:05d}",
+                "budget": budgets[idx % len(budgets)],
+                "availability": availability[idx % len(availability)],
+                "activities": activities[idx % len(activities)],
+                "intent": intents[idx % len(intents)],
+                "cafe": cafes[idx % len(cafes)],
+                "message": messages[idx % len(messages)],
+                "newsletter": "yes" if idx % 3 else "no",
+                "sessions": sessions,
+                "ts": f"2026-04-{(idx % 28) + 1:02d} {10 + (idx % 9):02d}:{(idx * 7) % 60:02d}",
+                "source": source,
+                "referred_by": ["riya.fac", "sneha.fac", "priya.fac"][idx % 3] if source == "referral" else "",
+            }
+        )
+        if idx <= 12:
+            status = "approved"
+        elif idx <= 28:
+            status = "pending"
+        elif idx <= 36:
+            status = "waitlist"
+        else:
+            status = "declined"
+        admin[member_id] = {
+            "status": status,
+            "tier": auto_tier(sessions),
+            "notes": "Strong demo lead." if idx % 4 == 0 else "",
+            "fac": idx in {3, 8, 14, 22, 31},
+        }
+
+    referrals = []
+    referral_targets = [member for member in members if member["source"] == "referral"][:9]
+    for idx, member in enumerate(referral_targets, start=1):
+        status = ["pending", "approved", "waitlist"][idx % 3]
+        if idx in {2, 5}:
+            status = "rejected"
+        referrals.append(
+            {
+                "id": f"r{idx:02d}",
+                "fac_id": member["referred_by"] or "riya.fac",
+                "member_id": member["id"],
+                "candidate_name": member["name"],
+                "email": member["email"],
+                "phone": member["phone"],
+                "experience_name": ["Canvas Night", "Secret Supper Walk", "Pottery & Pour Over"][idx % 3],
+                "reason": "Feels like a strong aesthetic and community fit for Nook.",
+                "created_at": f"2026-04-{(idx * 2) + 2:02d} 18:00",
+                "month": "2026-04",
+                "status": status,
+                "founder_note": "High-trust referral." if status == "approved" else "",
+            }
+        )
+
+    private_entries = [
+        {
+            "id": "n1",
+            "owner_id": "manju",
+            "title": "Founder reminders",
+            "body": "Revisit Friday applications, confirm next month's premium calendar, and tighten referral review cadence.",
+            "kind": "note",
+            "created_at": "2026-04-23 09:10",
+        },
+        {
+            "id": "n2",
+            "owner_id": "riya.fac",
+            "title": "Session read",
+            "body": "Aditi and Tara opened up after Act 2. Keep pairing introverts with hands-on moments.",
+            "kind": "update",
+            "created_at": "2026-04-23 22:10",
+        },
+        {
+            "id": "n3",
+            "owner_id": "sneha.fac",
+            "title": "Venue note",
+            "body": "Clay House works best when we keep the opener standing, not seated.",
+            "kind": "note",
+            "created_at": "2026-04-22 18:45",
+        },
+        {
+            "id": "n4",
+            "owner_id": "priya.fac",
+            "title": "Referral watch",
+            "body": "Two of my April referrals feel premium-tier ready if approved.",
+            "kind": "update",
+            "created_at": "2026-04-21 16:20",
+        },
+    ]
+
+    payments = [
+        {"id": "p01", "member_id": "m01", "label": "Worth It monthly", "amount": 1499, "status": "paid", "method": "UPI"},
+        {"id": "p02", "member_id": "m03", "label": "YHTTB monthly", "amount": 2499, "status": "paid", "method": "Card"},
+        {"id": "p03", "member_id": "m05", "label": "First Out trial", "amount": 499, "status": "pending", "method": "Razorpay link"},
+        {"id": "p04", "member_id": "m08", "label": "Worth It monthly", "amount": 1499, "status": "paid", "method": "Razorpay link"},
+        {"id": "p05", "member_id": "m11", "label": "IBP monthly", "amount": 999, "status": "pending", "method": "UPI"},
+        {"id": "p06", "member_id": "m14", "label": "YHTTB monthly", "amount": 2499, "status": "paid", "method": "Netbanking"},
+        {"id": "p07", "member_id": "m18", "label": "First Out trial", "amount": 499, "status": "pending", "method": "Razorpay link"},
+        {"id": "p08", "member_id": "m23", "label": "Worth It monthly", "amount": 1499, "status": "paid", "method": "UPI"},
+        {"id": "p09", "member_id": "m29", "label": "IBP monthly", "amount": 999, "status": "pending", "method": "Razorpay link"},
+        {"id": "p10", "member_id": "m31", "label": "Worth It monthly", "amount": 1499, "status": "paid", "method": "Card"},
+    ]
+
+    return {
+        "members": members,
+        "admin": admin,
+        "referrals": referrals,
+        "private_entries": private_entries,
+        "payments": payments,
+    }
 
 
 def tier_label(code: str) -> str:
@@ -300,15 +492,15 @@ def tier_label(code: str) -> str:
 
 def status_badge(status: str) -> str:
     styles = {
-        "pending": (CITRIC, NOOK_BLACK, "rgba(205,245,78,0.45)"),
-        "approved": (AQUAMARINE, NOOK_BLACK, "rgba(155,240,231,0.42)"),
-        "declined": (TANGERINE, NOOK_BLACK, "rgba(255,70,59,0.45)"),
-        "waitlist": (FUCHSIA, TEXT, "rgba(230,55,165,0.38)"),
-        "active": (AQUAMARINE, NOOK_BLACK, "rgba(155,240,231,0.42)"),
-        "candidate": (CITRIC, NOOK_BLACK, "rgba(205,245,78,0.45)"),
-        "offboarded": (NOOK_BLACK, TEXT, "rgba(255,253,247,0.16)"),
+        "pending": (CITRIC, NOOK_BLACK, "rgba(216,92,26,0.22)"),
+        "approved": (AQUAMARINE, NOOK_BLACK, "rgba(17,16,14,0.12)"),
+        "declined": (TANGERINE, PAPER_ALT, "rgba(216,92,26,0.28)"),
+        "waitlist": (FUCHSIA, PAPER_ALT, "rgba(17,16,14,0.10)"),
+        "active": (AQUAMARINE, NOOK_BLACK, "rgba(17,16,14,0.12)"),
+        "candidate": (CITRIC, NOOK_BLACK, "rgba(216,92,26,0.22)"),
+        "offboarded": (NOOK_BLACK, PAPER_ALT, "rgba(17,16,14,0.16)"),
     }
-    bg, fg, border = styles.get(status, (TANGERINE, NOOK_BLACK, "rgba(255,70,59,0.45)"))
+    bg, fg, border = styles.get(status, (TANGERINE, PAPER_ALT, "rgba(216,92,26,0.28)"))
     return (
         f"<span style='padding:4px 10px;border-radius:999px;"
         f"background:{bg};color:{fg};border:1px solid {border};"
@@ -318,12 +510,12 @@ def status_badge(status: str) -> str:
 
 def pill_html(text: str, tone: str = "aqua") -> str:
     tone_map = {
-        "klein": (KLEIN_BLUE, TEXT, "rgba(255,255,255,0.12)"),
-        "citric": (CITRIC, NOOK_BLACK, "rgba(205,245,78,0.45)"),
-        "aqua": (AQUAMARINE, NOOK_BLACK, "rgba(155,240,231,0.42)"),
-        "fuchsia": (FUCHSIA, TEXT, "rgba(230,55,165,0.38)"),
-        "tangerine": (TANGERINE, NOOK_BLACK, "rgba(255,70,59,0.45)"),
-        "black": (NOOK_BLACK, TEXT, "rgba(255,253,247,0.16)"),
+        "klein": (NOOK_BLACK, PAPER_ALT, "rgba(17,16,14,0.18)"),
+        "citric": (CITRIC, NOOK_BLACK, "rgba(216,92,26,0.18)"),
+        "aqua": (AQUAMARINE, NOOK_BLACK, "rgba(17,16,14,0.12)"),
+        "fuchsia": (FUCHSIA, PAPER_ALT, "rgba(17,16,14,0.10)"),
+        "tangerine": (TANGERINE, PAPER_ALT, "rgba(216,92,26,0.22)"),
+        "black": (NOOK_BLACK, PAPER_ALT, "rgba(17,16,14,0.18)"),
     }
     bg, fg, border = tone_map[tone]
     return (
@@ -342,6 +534,41 @@ def tier_badge(code: str) -> str:
     return pill_html(tier_label(code), tone=tone)
 
 
+def render_stat_strip(items: List[Dict]) -> None:
+    html = "<div class='stat-strip'>"
+    for item in items:
+        html += (
+            "<div class='stat-cell'>"
+            f"<div class='stat-line' style='background:{item.get('accent', FRAME_RED)}'></div>"
+            f"<div class='stat-value'>{item['value']}</div>"
+            f"<div class='stat-label'>{item['label']}</div>"
+            f"<div class='stat-note'>{item.get('note', '')}</div>"
+            "</div>"
+        )
+    html += "</div>"
+    st.markdown(html, unsafe_allow_html=True)
+
+
+def insight_card_html(title: str, detail: str, tone: str = "tangerine") -> str:
+    return (
+        "<div class='insight-card'>"
+        f"{pill_html(title, tone=tone)}"
+        f"<p>{detail}</p>"
+        "</div>"
+    )
+
+
+def editorial_card(title: str, body: str, eyebrow: Optional[str] = None) -> str:
+    eyebrow_html = f"<div class='eyebrow'>{eyebrow}</div>" if eyebrow else ""
+    return (
+        "<div class='card editorial-card'>"
+        f"{eyebrow_html}"
+        f"<h3>{title}</h3>"
+        f"<p>{body}</p>"
+        "</div>"
+    )
+
+
 def current_user() -> Optional[Dict]:
     return st.session_state.get("current_user")
 
@@ -353,7 +580,155 @@ def data_store() -> Dict:
 
 
 def persist() -> None:
+    st.session_state.data = hydrate_data(st.session_state.data)
     save_data(st.session_state.data)
+
+
+def all_accounts(data: Optional[Dict] = None) -> List[Dict]:
+    data = data or (st.session_state.get("data") if "data" in st.session_state else load_data())
+    facilitator_accounts = []
+    for fac in data["facs"]:
+        if fac.get("uid") and fac.get("password") and fac.get("status") != "offboarded":
+            facilitator_accounts.append(
+                {
+                    "id": fac["uid"],
+                    "name": fac["name"],
+                    "role": "facilitator",
+                    "password": fac["password"],
+                    "fac_id": fac["id"],
+                }
+            )
+    return [FOUNDER_ACCOUNT, *facilitator_accounts]
+
+
+def resolve_account(user_id: str) -> Optional[Dict]:
+    return next((account for account in all_accounts() if account["id"] == user_id), None)
+
+
+def resolve_user_name(user_id: str) -> str:
+    account = resolve_account(user_id)
+    return account["name"] if account else user_id
+
+
+def parse_iso_day(raw: str) -> date:
+    return datetime.strptime(raw, "%Y-%m-%d").date()
+
+
+def upcoming_experiences(limit: Optional[int] = None) -> List[Dict]:
+    items = sorted(data_store()["exps"], key=lambda exp: (exp.get("date", "9999-12-31"), exp.get("time", "23:59")))
+    return items[:limit] if limit else items
+
+
+def tier_rank(code: str) -> int:
+    return {"fo": 1, "ibp": 2, "wi": 3, "yhttb": 4}.get(code, 0)
+
+
+def format_money(amount: int) -> str:
+    return f"Rs {amount:,}"
+
+
+def facilitator_session_load(fid: str) -> int:
+    return sum(1 for exp in data_store()["exps"] if exp.get("fac") == fid)
+
+
+def smart_member_score(member: Dict) -> int:
+    admin = get_admin(member["id"])
+    text_blob = " ".join(
+        [
+            member.get("intent", "").lower(),
+            member.get("activities", "").lower(),
+            member.get("message", "").lower(),
+            member.get("availability", "").lower(),
+        ]
+    )
+    score = 32
+    score += min(member.get("sessions", 0) * 9, 32)
+    score += 10 if member.get("newsletter") == "yes" else 0
+    score += 8 if any(word in text_blob for word in ["community", "thoughtful", "third place", "warm", "conversation"]) else 0
+    score += 6 if any(word in text_blob for word in ["weekend", "friday", "saturday"]) else 0
+    score += 8 if "1200" in member.get("budget", "") or "+" in member.get("budget", "") else 0
+    score += 7 if admin["fac"] else 0
+    score += 6 if admin["status"] == "approved" else 0
+    return max(0, min(score, 100))
+
+
+def smart_member_recommendation(member: Dict) -> Dict:
+    admin = get_admin(member["id"])
+    score = smart_member_score(member)
+    if admin["fac"] and member.get("sessions", 0) >= 4:
+        return {"label": "Onboard as facilitator candidate", "tone": "fuchsia"}
+    if score >= 72 and admin["status"] in {"pending", "waitlist"}:
+        return {"label": "Approve soon", "tone": "citric"}
+    if score >= 55:
+        return {"label": "Warm lead", "tone": "aqua"}
+    return {"label": "Needs review", "tone": "tangerine"}
+
+
+def recommended_facilitator(exp: Dict) -> Optional[Dict]:
+    candidates = []
+    for fac in data_store()["facs"]:
+        if fac["status"] != "active":
+            continue
+        if on_leave(fac["id"]):
+            continue
+        access_gap = tier_rank(fac.get("access", "fo")) - tier_rank(exp.get("tier", "fo"))
+        if access_gap < 0:
+            continue
+        load_penalty = facilitator_session_load(fac["id"]) * 4
+        experience_bonus = min(fac.get("sessions", 0), 12)
+        score = 70 + experience_bonus + (6 - access_gap * 2) - load_penalty
+        candidates.append((score, fac))
+    candidates.sort(key=lambda item: item[0], reverse=True)
+    return candidates[0][1] if candidates else None
+
+
+def smart_operational_alerts(user: Dict) -> List[Dict]:
+    if user["role"] != "founder":
+        fac = get_fac(user["fac_id"]) or {}
+        alerts = []
+        if on_leave(user["fac_id"]):
+            alerts.append({"title": "You are currently marked on leave", "detail": "Update your availability if this changed.", "tone": "tangerine"})
+        my_sessions = [exp for exp in upcoming_experiences() if exp.get("fac") == user["fac_id"]]
+        if my_sessions:
+            next_session = my_sessions[0]
+            alerts.append(
+                {
+                    "title": f"Next session: {next_session['name']}",
+                    "detail": f"{next_session['date']} at {next_session['time']} · {next_session['venue']}",
+                    "tone": "aqua",
+                }
+            )
+        unread = sum(1 for msg in data_store()["msgs"] if msg["to"] == user["id"] and not msg["read"])
+        if unread:
+            alerts.append({"title": f"{unread} unread message(s)", "detail": "Check Messages for founder notes and reminders.", "tone": "citric"})
+        if fac.get("status") == "candidate":
+            alerts.append({"title": "You are still in candidate mode", "detail": "Your access stays limited until founder review is complete.", "tone": "fuchsia"})
+        return alerts[:3]
+
+    alerts = []
+    data = data_store()
+    unread = sum(1 for msg in data["msgs"] if msg["to"] == "manju" and not msg["read"])
+    if unread:
+        alerts.append({"title": f"{unread} unread facilitator update(s)", "detail": "There are team messages waiting in the founder inbox.", "tone": "klein"})
+    flagged_candidates = [member for member in data["members"] if get_admin(member["id"])["fac"]]
+    if flagged_candidates:
+        alerts.append({"title": f"{len(flagged_candidates)} facilitator candidate(s)", "detail": "Promising members are ready for onboarding review.", "tone": "fuchsia"})
+    for exp in upcoming_experiences(limit=5):
+        if not exp.get("fac"):
+            alerts.append({"title": f"{exp['name']} has no facilitator", "detail": "Assign an active facilitator before the session goes live.", "tone": "tangerine"})
+        elif on_leave(exp["fac"]):
+            fac = get_fac(exp["fac"])
+            fac_name = fac["name"] if fac else "Assigned facilitator"
+            alerts.append({"title": f"{fac_name} is on leave", "detail": f"Reassign {exp['name']} or update leave dates.", "tone": "tangerine"})
+    stale_pending = [
+        member
+        for member in data["members"]
+        if get_admin(member["id"])["status"] == "pending"
+        and datetime.now() - datetime.strptime(member["ts"], "%Y-%m-%d %H:%M") > timedelta(days=5)
+    ]
+    if stale_pending:
+        alerts.append({"title": f"{len(stale_pending)} pending lead(s) are aging", "detail": "Those members have waited more than five days for a decision.", "tone": "citric"})
+    return alerts[:4]
 
 
 def get_admin(member_id: str) -> Dict:
@@ -373,7 +748,7 @@ def on_leave(fid: str) -> bool:
 
 
 def authenticate(username: str, password: str) -> Optional[Dict]:
-    for user in USERS:
+    for user in all_accounts():
         if user["id"] == username and user["password"] == password:
             return user
     return None
@@ -383,56 +758,75 @@ def inject_css() -> None:
     st.markdown(
         f"""
         <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Syne:wght@700;800&display=swap');
         :root {{
+            --frame-red: {FRAME_RED};
+            --paper: {PAPER};
+            --paper-alt: {PAPER_ALT};
+            --ink: {INK};
+            --soft-ink: {SOFT_INK};
+            --line: {LINE};
             --klein-blue: {KLEIN_BLUE};
             --citric: {CITRIC};
             --aquamarine: {AQUAMARINE};
             --fuchsia: {FUCHSIA};
             --tangerine: {TANGERINE};
-            --nook-black: {NOOK_BLACK};
-            --text-main: {TEXT};
-            --text-soft: {MUTED};
-            --surface: {SURFACE};
-            --surface-alt: {SURFACE_ALT};
+        }}
+        html, body, [class*="css"] {{
+            font-family: "Space Grotesk", sans-serif;
         }}
         .stApp {{
-            background:
-                radial-gradient(circle at top left, rgba(65,0,245,0.28), transparent 26%),
-                radial-gradient(circle at top right, rgba(230,55,165,0.16), transparent 24%),
-                radial-gradient(circle at bottom left, rgba(255,70,59,0.16), transparent 20%),
-                linear-gradient(135deg, #191414, #120f16 52%, #1b1715);
-            color: {TEXT};
+            background: var(--frame-red);
+            color: var(--ink);
         }}
         [data-testid="stAppViewContainer"] {{
             background: transparent;
         }}
         .block-container {{
-            padding-top: 1.5rem;
-            padding-bottom: 3rem;
+            max-width: 1180px;
+            margin: 28px auto 48px auto;
+            padding: 26px 34px 48px 34px;
+            background: var(--paper);
+            border: 1px solid rgba(15,14,13,0.14);
+            box-shadow: 0 24px 60px rgba(0,0,0,0.18);
         }}
         [data-testid="stSidebar"] {{
-            background:
-                radial-gradient(circle at top, rgba(65,0,245,0.25), transparent 32%),
-                linear-gradient(180deg, #191414, #130f14 50%, #0f0c12);
-            border-right: 1px solid {BORDER};
+            background: var(--paper-alt);
+            border-right: 1px solid rgba(15,14,13,0.10);
         }}
         [data-testid="stSidebar"] * {{
-            color: {TEXT} !important;
+            color: var(--ink) !important;
+        }}
+        [data-testid="stSidebar"] .block-container {{
+            margin: 0;
+            padding: 22px 18px 24px 18px;
+            background: transparent;
+            border: none;
+            box-shadow: none;
         }}
         [data-testid="stMetric"] {{
-            background: {SURFACE};
-            border: 1px solid {BORDER};
-            padding: 18px;
-            border-radius: 18px;
-            box-shadow: 0 12px 24px rgba(0,0,0,0.16);
+            background: var(--paper-alt);
+            border: 1px solid rgba(15,14,13,0.10);
+            border-top: 3px solid var(--frame-red);
+            padding: 16px;
+            border-radius: 0;
+            box-shadow: none;
         }}
         [data-testid="stMetricLabel"],
         [data-testid="stMetricValue"],
         [data-testid="stMetricDelta"] {{
-            color: {TEXT} !important;
+            color: var(--ink) !important;
+        }}
+        h1, h2, h3, h4 {{
+            font-family: "Syne", "Space Grotesk", sans-serif;
+            color: var(--ink);
+            letter-spacing: -0.04em;
         }}
         h1, h2, h3, p, li, label, .stMarkdown, .stCaption, .stAlert {{
-            color: {TEXT};
+            color: var(--ink);
+        }}
+        .stMarkdown a {{
+            color: var(--frame-red);
         }}
         div[data-baseweb="input"] > div,
         div[data-baseweb="select"] > div,
@@ -441,110 +835,116 @@ def inject_css() -> None:
         .stTextArea textarea,
         .stDateInput input,
         .stNumberInput input {{
-            background: {SURFACE_ALT};
-            color: {TEXT};
-            border: 1px solid rgba(155,240,231,0.24);
+            background: #ffffff;
+            color: var(--ink);
+            border: 1px solid rgba(15,14,13,0.14);
         }}
         div[data-baseweb="input"] input,
         div[data-baseweb="select"] * ,
         div[data-baseweb="textarea"] textarea,
         .stDateInput * ,
         .stNumberInput input {{
-            color: {TEXT} !important;
+            color: var(--ink) !important;
         }}
         div[data-baseweb="select"] > div,
         div[data-baseweb="input"] > div,
         div[data-baseweb="textarea"] > div {{
-            background: {SURFACE_ALT};
-            border-radius: 14px;
+            background: #ffffff;
+            border-radius: 0;
         }}
         .stTextInput label,
         .stTextArea label,
         .stDateInput label,
         .stSelectbox label,
         .stNumberInput label {{
-            color: {TEXT} !important;
+            color: var(--ink) !important;
             font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-size: 11px;
         }}
         .stButton > button,
         .stForm [data-testid="stFormSubmitButton"] > button {{
-            border-radius: 14px;
-            border: 1px solid rgba(255,255,255,0.12);
-            min-height: 2.75rem;
+            border-radius: 0;
+            border: 1px solid rgba(15,14,13,0.14);
+            min-height: 2.9rem;
             font-weight: 700;
-            letter-spacing: 0.01em;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
         }}
         .stButton > button[kind="primary"],
         .stForm [data-testid="stFormSubmitButton"] > button[kind="primary"] {{
-            background: linear-gradient(135deg, {CITRIC}, {AQUAMARINE});
-            color: {NOOK_BLACK};
-            border-color: rgba(155,240,231,0.4);
-            box-shadow: 0 12px 30px rgba(155,240,231,0.16);
+            background: var(--ink);
+            color: var(--paper);
+            border-color: var(--ink);
+            box-shadow: none;
         }}
         .stButton > button[kind="secondary"],
         .stForm [data-testid="stFormSubmitButton"] > button[kind="secondary"] {{
-            background: rgba(255,255,255,0.035);
-            color: {TEXT};
-            border-color: rgba(255,255,255,0.1);
+            background: transparent;
+            color: var(--ink);
+            border-color: rgba(15,14,13,0.14);
         }}
         .stButton > button:hover,
         .stForm [data-testid="stFormSubmitButton"] > button:hover {{
-            border-color: rgba(205,245,78,0.55);
-            color: {TEXT};
+            border-color: var(--frame-red);
+            color: var(--ink);
         }}
         .stExpander {{
-            background: rgba(35,28,27,0.94);
-            border: 1px solid {BORDER};
-            border-radius: 18px;
+            background: var(--paper-alt);
+            border: 1px solid rgba(15,14,13,0.10);
+            border-radius: 0;
             overflow: hidden;
         }}
         .stExpander details summary p {{
-            color: {TEXT} !important;
+            color: var(--ink) !important;
             font-weight: 600;
         }}
         .card {{
-            background: linear-gradient(180deg, rgba(35,28,27,0.96), rgba(26,20,22,0.96));
-            border: 1px solid {BORDER};
-            border-radius: 20px;
+            background: var(--paper-alt);
+            border: 1px solid rgba(15,14,13,0.10);
             padding: 22px;
-            margin-bottom: 16px;
-            box-shadow: 0 12px 32px rgba(0,0,0,0.22);
+            margin-bottom: 18px;
+            box-shadow: none;
         }}
         .eyebrow {{
-            color: {CITRIC};
-            font-size: 12px;
+            color: var(--frame-red);
+            font-size: 11px;
             letter-spacing: 0.18em;
             text-transform: uppercase;
             margin-bottom: 8px;
             font-weight: 700;
         }}
         .hero {{
-            background:
-                linear-gradient(115deg, rgba(65,0,245,0.34), rgba(230,55,165,0.18) 38%, rgba(255,70,59,0.2) 70%, rgba(155,240,231,0.14));
-            border: 1px solid rgba(155,240,231,0.24);
-            border-radius: 24px;
-            padding: 28px;
-            margin-bottom: 18px;
-            box-shadow: 0 18px 44px rgba(0,0,0,0.24);
+            display: grid;
+            grid-template-columns: 1.35fr .8fr;
+            gap: 24px;
+            border-top: 2px solid var(--frame-red);
+            padding: 18px 0 28px 0;
+            margin-bottom: 26px;
         }}
         .hero h1 {{
             margin: 0;
-            font-size: 46px;
-            line-height: 0.95;
+            font-size: clamp(52px, 8vw, 94px);
+            line-height: 0.88;
+        }}
+        .hero-copy {{
+            font-size: 14px;
+            line-height: 1.6;
+            max-width: 420px;
         }}
         .muted {{
-            color: {MUTED};
+            color: var(--soft-ink);
         }}
         .session-card {{
-            background: linear-gradient(180deg, rgba(29,23,24,0.98), rgba(24,19,21,0.98));
-            border: 1px solid {BORDER};
-            border-left: 4px solid {AQUAMARINE};
-            border-radius: 18px;
+            background: var(--paper-alt);
+            border: 1px solid rgba(15,14,13,0.10);
+            border-left: 4px solid var(--frame-red);
             padding: 18px;
             margin-bottom: 14px;
         }}
         .subtle {{
-            color: {MUTED};
+            color: var(--soft-ink);
             font-size: 13px;
         }}
         .pill {{
@@ -557,15 +957,14 @@ def inject_css() -> None:
             font-size: 12px;
         }}
         .sidebar-brand {{
-            background: linear-gradient(160deg, rgba(65,0,245,0.26), rgba(25,20,20,0.82) 45%, rgba(255,70,59,0.18));
-            border: 1px solid rgba(155,240,231,0.18);
-            border-radius: 20px;
+            background: var(--paper);
+            border: 1px solid rgba(15,14,13,0.10);
             padding: 16px;
             margin-bottom: 14px;
         }}
         .sidebar-brand h3 {{
             margin: 0 0 4px 0;
-            color: {TEXT};
+            color: var(--ink);
         }}
         .swatch-row {{
             display: flex;
@@ -578,6 +977,138 @@ def inject_css() -> None:
             border-radius: 999px;
             border: 1px solid rgba(255,255,255,0.16);
         }}
+        .editorial-rail {{
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border-left: 1px solid rgba(15,14,13,0.12);
+            padding-left: 22px;
+        }}
+        .editorial-visual {{
+            min-height: 320px;
+            background:
+                linear-gradient(90deg, rgba(15,14,13,0.06) 0 2%, transparent 2% 100%),
+                repeating-linear-gradient(90deg, rgba(15,14,13,0.04) 0 2px, transparent 2px 26px),
+                linear-gradient(140deg, #e7e2da, #ffffff 60%, #efeae1);
+            border: 1px solid rgba(15,14,13,0.08);
+            position: relative;
+            overflow: hidden;
+        }}
+        .editorial-visual::after {{
+            content: "";
+            position: absolute;
+            right: 14%;
+            bottom: 10%;
+            width: 14px;
+            height: 32px;
+            border-radius: 12px;
+            background: var(--frame-red);
+            box-shadow: 0 0 0 4px rgba(255,255,255,0.75);
+        }}
+        .stat-strip {{
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
+            margin: 10px 0 28px 0;
+        }}
+        .stat-cell {{
+            padding-top: 10px;
+        }}
+        .stat-line {{
+            width: 100%;
+            height: 2px;
+            margin-bottom: 14px;
+        }}
+        .stat-value {{
+            font-family: "Syne", "Space Grotesk", sans-serif;
+            font-size: clamp(26px, 3vw, 42px);
+            line-height: 1;
+            letter-spacing: -0.05em;
+            color: var(--ink);
+        }}
+        .stat-label {{
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--soft-ink);
+            margin-top: 6px;
+        }}
+        .stat-note {{
+            font-size: 12px;
+            color: var(--soft-ink);
+            margin-top: 6px;
+        }}
+        .insight-card {{
+            padding: 18px;
+            background: var(--paper-alt);
+            border: 1px solid rgba(15,14,13,0.10);
+            margin-bottom: 14px;
+        }}
+        .insight-card p {{
+            margin: 10px 0 0 0;
+            line-height: 1.6;
+            color: var(--soft-ink);
+            font-size: 14px;
+        }}
+        .editorial-card h3 {{
+            margin: 0 0 8px 0;
+            font-size: 28px;
+        }}
+        .editorial-card p {{
+            margin: 0;
+            line-height: 1.7;
+            color: var(--soft-ink);
+        }}
+        .section-title {{
+            font-family: "Syne", "Space Grotesk", sans-serif;
+            font-size: clamp(28px, 4vw, 54px);
+            line-height: 0.95;
+            letter-spacing: -0.05em;
+            margin: 18px 0 8px 0;
+            text-transform: uppercase;
+        }}
+        .section-note {{
+            max-width: 520px;
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--soft-ink);
+            margin-bottom: 20px;
+        }}
+        .queue-card {{
+            padding: 18px;
+            border: 1px solid rgba(15,14,13,0.10);
+            background: var(--paper-alt);
+            margin-bottom: 14px;
+        }}
+        .queue-card h4 {{
+            margin: 6px 0 2px 0;
+            font-size: 22px;
+        }}
+        .queue-card p {{
+            margin: 10px 0 0 0;
+            color: var(--soft-ink);
+            line-height: 1.6;
+            font-size: 14px;
+        }}
+        @media (max-width: 980px) {{
+            .hero {{
+                grid-template-columns: 1fr;
+            }}
+            .editorial-rail {{
+                border-left: none;
+                border-top: 1px solid rgba(15,14,13,0.12);
+                padding-left: 0;
+                padding-top: 18px;
+            }}
+            .stat-strip {{
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }}
+            .block-container {{
+                margin: 0;
+                border: none;
+                box-shadow: none;
+            }}
+        }}
         </style>
         """,
         unsafe_allow_html=True,
@@ -586,36 +1117,58 @@ def inject_css() -> None:
 
 def login_screen() -> None:
     inject_css()
-    left, right = st.columns([1.25, 1], gap="large")
+    left, right = st.columns([1.45, 0.9], gap="large")
     with left:
         st.markdown(
             f"""
             <div class="hero">
-              <div class="eyebrow">Nook Control Room</div>
-              <h1>Your<br><span style="color:{CITRIC}">third</span><br>place.</h1>
-              <p class="muted" style="margin-top:14px;font-size:15px;max-width:540px">
-                Founder and facilitator operations in one Streamlit control room, with separate access levels,
-                planning flows, leave tracking, member review, and internal messaging.
-              </p>
+              <div>
+                <div class="eyebrow">Nook Control Room</div>
+                <h1>FOUNDER<br>& FACILITATOR<br><span style="color:{FRAME_RED}">SYSTEM</span></h1>
+                <p class="hero-copy">
+                  A role-based operating layer for Nook: founder decisions, facilitator logistics,
+                  member review, experience design, internal messaging, and smarter daily action cues.
+                </p>
+              </div>
+              <div class="editorial-rail">
+                <div class="editorial-visual"></div>
+                <div>
+                  <div class="eyebrow">Access Design</div>
+                  <p class="hero-copy">
+                    Founder view sees the entire operating picture. Facilitator view stays focused on
+                    assigned sessions, messages, availability, and profile context.
+                  </p>
+                </div>
+              </div>
             </div>
             """,
             unsafe_allow_html=True,
         )
+        render_stat_strip(
+            [
+                {"value": "2", "label": "Core routes", "note": "Founder and facilitator", "accent": FRAME_RED},
+                {"value": "6", "label": "Seeded accounts", "note": "Ready for demo and testing", "accent": KLEIN_BLUE},
+                {"value": "4", "label": "Smart layers", "note": "Priorities, alerts, fits, staffing", "accent": AQUAMARINE},
+                {"value": "1", "label": "Single workspace", "note": "One control room, different access", "accent": FUCHSIA},
+            ]
+        )
         st.markdown(
-            """
-            <div class="card">
-              <div class="eyebrow">Sample Accounts</div>
-              <div class="subtle">Founder: <strong>manju / founder2026</strong></div>
-              <div class="subtle">Facilitator: <strong>riya.fac / riya123</strong></div>
-              <div class="subtle">Facilitator: <strong>aryan.fac / aryan123</strong></div>
-              <div class="subtle">Facilitator: <strong>sneha.fac / sneha123</strong></div>
-            </div>
-            """,
+            editorial_card(
+                "Access stays private",
+                "Passwords are no longer shown on this screen. Founder can still create or reset facilitator access inside the app, and demo entry points stay available without exposing credentials.",
+                eyebrow="Security",
+            ),
             unsafe_allow_html=True,
         )
     with right:
-        st.markdown("<div class='card'>", unsafe_allow_html=True)
-        st.subheader("Sign in")
+        st.markdown(
+            editorial_card(
+                "Enter your assigned credentials",
+                "Founder and facilitator passwords stay private. Use the demo entry below if you only want to preview the routes.",
+                eyebrow="Login",
+            ),
+            unsafe_allow_html=True,
+        )
         with st.form("login_form"):
             username = st.text_input("Username")
             password = st.text_input("Password", type="password")
@@ -626,7 +1179,31 @@ def login_screen() -> None:
                 st.session_state.current_user = user
                 st.rerun()
             st.error("Wrong credentials. Contact Manju.")
-        st.markdown("</div>", unsafe_allow_html=True)
+        st.caption("Usernames are visible to the founder. Passwords stay hidden from this page.")
+        st.markdown(
+            editorial_card(
+                "Demo entry",
+                "Open the founder workspace or the facilitator route without revealing passwords on the login screen.",
+                eyebrow="Preview",
+            ),
+            unsafe_allow_html=True,
+        )
+        demo_left, demo_right = st.columns(2)
+        if demo_left.button("Demo founder", use_container_width=True, type="secondary"):
+            st.session_state.current_user = deepcopy(FOUNDER_ACCOUNT)
+            st.rerun()
+        facilitator_demo = next((account for account in all_accounts() if account["role"] == "facilitator"), None)
+        if demo_right.button("Demo facilitator", use_container_width=True, type="secondary") and facilitator_demo:
+            st.session_state.current_user = facilitator_demo
+            st.rerun()
+        st.markdown(
+            editorial_card(
+                "Visible usernames",
+                "Founder username: manju. Facilitator usernames are assigned by founder, for example riya.fac and sneha.fac.",
+                eyebrow="Hint",
+            ),
+            unsafe_allow_html=True,
+        )
 
 
 def sidebar_navigation(user: Dict) -> str:
@@ -654,15 +1231,14 @@ def sidebar_navigation(user: Dict) -> str:
         st.markdown(
             f"""
             <div class="sidebar-brand">
-              <div class="eyebrow">Logged in</div>
+              <div class="eyebrow">Nook</div>
               <h3>{user['name']}</h3>
-              <div class="subtle">{user['role'].title()} view</div>
+              <div class="subtle">{user['role'].title()} route</div>
               <div class="swatch-row">
+                <div class="swatch" style="background:{FRAME_RED}"></div>
                 <div class="swatch" style="background:{KLEIN_BLUE}"></div>
                 <div class="swatch" style="background:{CITRIC}"></div>
                 <div class="swatch" style="background:{AQUAMARINE}"></div>
-                <div class="swatch" style="background:{FUCHSIA}"></div>
-                <div class="swatch" style="background:{TANGERINE}"></div>
               </div>
             </div>
             """,
@@ -683,10 +1259,9 @@ def sidebar_navigation(user: Dict) -> str:
 def show_header(title: str, subtitle: str) -> None:
     st.markdown(
         f"""
-        <div class="hero">
-          <div class="eyebrow">{title}</div>
-          <p style="font-size:15px;margin:0;color:{MUTED}">{subtitle}</p>
-        </div>
+        <div class="eyebrow">Nook / {title}</div>
+        <div class="section-title">{title}</div>
+        <div class="section-note">{subtitle}</div>
         """,
         unsafe_allow_html=True,
     )
@@ -1134,6 +1709,1133 @@ def render_docs() -> None:
     st.write("- This is a strong prototype base; real production auth should move to a backend and database.")
 
 
+def build_experience_blueprint(theme: str, tier: str, mood: str, venue_type: str) -> Dict[str, str]:
+    theme_clean = theme.strip() or "Curated Evening"
+    mood_key = mood.lower().strip()
+    venue_key = venue_type.lower().strip()
+    opener_map = {
+        "calm": "Soft arrival ritual with a welcome drink and one low-pressure prompt card per person.",
+        "playful": "Fast warm-up with pair swaps, playful prompt cards, and an immediate shared challenge.",
+        "intimate": "Quiet seating cluster, no-name introductions, and a short story exchange.",
+        "bold": "High-energy arrival with a tactile icebreaker and immediate room movement.",
+    }
+    unwind_map = {
+        "fo": "Founder-style closeout with one memorable question and an easy next-step invitation.",
+        "ibp": "A slower circle close where members reflect on one surprising connection from the room.",
+        "wi": "A premium-feeling closing ritual with names revealed at the warmest emotional beat.",
+        "yhttb": "A richer hosted close with founder-grade details, memory anchors, and a discreet follow-up cue.",
+    }
+    activity = "Shared experience designed around the venue so conversation grows naturally instead of feeling forced."
+    if any(word in theme_clean.lower() for word in ["paint", "canvas", "art", "sketch"]):
+        activity = "Paired visual creation with hidden prompts, then a mid-point swap so people build on each other's work."
+    elif any(word in theme_clean.lower() for word in ["dinner", "supper", "food", "tasting"]):
+        activity = "A guided tasting arc where each course unlocks a conversation direction and one shared choice."
+    elif any(word in theme_clean.lower() for word in ["walk", "route", "city", "trail"]):
+        activity = "A structured movement-based experience with check-in stops and one reflective prompt at each pivot."
+    elif any(word in theme_clean.lower() for word in ["pottery", "clay", "craft", "studio"]):
+        activity = "Hands-on making session where pairs trade interpretation rather than working in isolation."
+
+    transport = "Founder-arranged cab clusters."
+    if "walk" in venue_key or "old city" in venue_key:
+        transport = "Walkable route with one fixed regroup point."
+    elif "cafe" in venue_key or "studio" in venue_key:
+        transport = "Auto and cab mix with clear arrival timing."
+
+    notes = (
+        f"Keep the room feeling {mood.lower()} and intentional. "
+        f"Prioritize {tier_label(tier)} expectations and make sure the venue supports easy conversation flow."
+    )
+    return {
+        "name": theme_clean,
+        "act1": opener_map.get(mood_key, opener_map["calm"]),
+        "act2": activity,
+        "act3": unwind_map.get(tier, unwind_map["fo"]),
+        "transport": transport,
+        "notes": notes,
+    }
+
+
+def render_dashboard(user: Dict) -> None:
+    data = data_store()
+    show_header("Dashboard", "An editorial view of what needs attention now, what is healthy, and what should happen next.")
+    if user["role"] == "founder":
+        pending = sum(1 for m in data["members"] if get_admin(m["id"])["status"] == "pending")
+        revenue = sum(p["amount"] for p in data["payments"] if p["status"] == "paid")
+        active_facs = sum(1 for f in data["facs"] if f["status"] == "active")
+        render_stat_strip(
+            [
+                {"value": len(data["members"]), "label": "Total submissions", "note": "Community pipeline", "accent": FRAME_RED},
+                {"value": pending, "label": "Pending review", "note": "Needs founder decision", "accent": CITRIC},
+                {"value": format_money(revenue), "label": "Revenue collected", "note": "Paid memberships", "accent": KLEIN_BLUE},
+                {"value": active_facs, "label": "Active facilitators", "note": "Available team", "accent": AQUAMARINE},
+            ]
+        )
+        st.markdown(
+            "<div class='section-title'>Priority Queue</div>"
+            "<div class='section-note'>Smart-ranked leads and live operational alerts so the founder can move quickly without scanning every page.</div>",
+            unsafe_allow_html=True,
+        )
+        left, right = st.columns([1.2, 0.8], gap="large")
+        priority_members = sorted(
+            data["members"],
+            key=lambda member: (
+                get_admin(member["id"])["status"] not in {"pending", "waitlist"},
+                -smart_member_score(member),
+                member["ts"],
+            ),
+        )[:4]
+        with left:
+            for member in priority_members:
+                admin = get_admin(member["id"])
+                recommendation = smart_member_recommendation(member)
+                st.markdown(
+                    f"""
+                    <div class="queue-card">
+                      {pill_html(recommendation["label"], recommendation["tone"])}
+                      {status_badge(admin["status"])}
+                      {tier_badge(admin["tier"])}
+                      <h4>{member["name"]}</h4>
+                      <div class="subtle">Lead score {smart_member_score(member)} · {member["email"]} · {member["availability"]}</div>
+                      <p>{member["intent"]}</p>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+        with right:
+            for alert in smart_operational_alerts(user):
+                st.markdown(insight_card_html(alert["title"], alert["detail"], alert["tone"]), unsafe_allow_html=True)
+
+        st.markdown(
+            "<div class='section-title'>Upcoming Experiences</div>"
+            "<div class='section-note'>Current sessions, staffing confidence, and quick founder visibility into facilitator coverage.</div>",
+            unsafe_allow_html=True,
+        )
+        exp_left, exp_right = st.columns([1.05, 0.95], gap="large")
+        with exp_left:
+            for exp in upcoming_experiences(limit=3):
+                fac = get_fac(exp["fac"]) if exp.get("fac") else None
+                recommendation = recommended_facilitator(exp) if (not fac or on_leave(fac["id"])) else None
+                suggestion = f"Suggested facilitator: {recommendation['name']}" if recommendation else "Current staffing looks good."
+                st.markdown(
+                    f"""
+                    <div class="session-card">
+                      {tier_badge(exp["tier"])}
+                      <strong>{exp["name"]}</strong><br>
+                      <span class="subtle">{exp["date"]} · {exp["time"]} · {exp["venue"]} · {format_money(int(exp["price"]))}/person</span><br>
+                      <span class="subtle">Assigned: {fac["name"] if fac else "Unassigned"}{' · on leave' if fac and on_leave(fac['id']) else ''}</span>
+                      <p style="margin:10px 0 0 0;color:{SOFT_INK};font-size:14px;line-height:1.6">{suggestion}</p>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+        with exp_right:
+            facilitator_rows = sorted(
+                [fac_item for fac_item in data["facs"] if fac_item["status"] != "offboarded"],
+                key=lambda fac_item: (on_leave(fac_item["id"]), facilitator_session_load(fac_item["id"])),
+            )
+            for fac_item in facilitator_rows[:4]:
+                availability = "On leave" if on_leave(fac_item["id"]) else "Available"
+                st.markdown(
+                    f"""
+                    <div class="queue-card">
+                      {status_badge(fac_item["status"])}
+                      {pill_html(availability, "tangerine" if availability == "On leave" else "aqua")}
+                      <h4>{fac_item["name"]}</h4>
+                      <div class="subtle">{tier_label(fac_item["access"])} access · {facilitator_session_load(fac_item["id"])} assigned session(s)</div>
+                      <p>{fac_item["notes"]}</p>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+    else:
+        fac = get_fac(user["fac_id"]) or {}
+        my_sessions = [exp for exp in data["exps"] if exp["fac"] == user["fac_id"]]
+        unread = sum(1 for msg in data["msgs"] if msg["to"] == user["id"] and not msg["read"])
+        render_stat_strip(
+            [
+                {"value": len(my_sessions), "label": "My sessions", "note": "Assigned by founder", "accent": FRAME_RED},
+                {"value": fac.get("status", "-").title(), "label": "My status", "note": "Current facilitator state", "accent": AQUAMARINE},
+                {"value": fac.get("refs", 0), "label": "Referral slots", "note": "Available invites", "accent": CITRIC},
+                {"value": unread, "label": "Unread messages", "note": "Founder updates waiting", "accent": KLEIN_BLUE},
+            ]
+        )
+        st.markdown(
+            "<div class='section-title'>Facilitator Focus</div>"
+            "<div class='section-note'>Your next session, your live alerts, and the room details you need before showing up.</div>",
+            unsafe_allow_html=True,
+        )
+        left, right = st.columns([1.08, 0.92], gap="large")
+        with left:
+            if not my_sessions:
+                st.info("No sessions assigned yet.")
+            for exp in my_sessions:
+                st.markdown(
+                    f"""
+                    <div class="session-card">
+                      {tier_badge(exp["tier"])}
+                      <strong>{exp["name"]}</strong><br>
+                      <span class="subtle">{exp["date"]} · {exp["time"]} · {exp["venue"]} · Max {exp["max"]}</span>
+                      <hr style="border-color:{LINE}">
+                      <div class="subtle"><strong>Act 1:</strong> {exp["act1"]}</div>
+                      <div class="subtle"><strong>Act 2:</strong> {exp["act2"]}</div>
+                      <div class="subtle"><strong>Act 3:</strong> {exp["act3"]}</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+        with right:
+            for alert in smart_operational_alerts(user):
+                st.markdown(insight_card_html(alert["title"], alert["detail"], alert["tone"]), unsafe_allow_html=True)
+
+
+def render_members() -> None:
+    data = data_store()
+    show_header("Members", "Review incoming Nook submissions, sort by smart fit, and move quickly on people who deserve attention.")
+    counts = {
+        "all": len(data["members"]),
+        "pending": sum(1 for m in data["members"] if get_admin(m["id"])["status"] == "pending"),
+        "approved": sum(1 for m in data["members"] if get_admin(m["id"])["status"] == "approved"),
+        "waitlist": sum(1 for m in data["members"] if get_admin(m["id"])["status"] == "waitlist"),
+    }
+    render_stat_strip(
+        [
+            {"value": counts["all"], "label": "All members", "note": "Current records", "accent": FRAME_RED},
+            {"value": counts["pending"], "label": "Pending", "note": "Awaiting founder action", "accent": CITRIC},
+            {"value": counts["approved"], "label": "Approved", "note": "Ready for programming", "accent": AQUAMARINE},
+            {"value": counts["waitlist"], "label": "Waitlist", "note": "Hold for later follow-up", "accent": FUCHSIA},
+        ]
+    )
+    filters_left, filters_mid, filters_right = st.columns([1.1, 0.8, 0.8])
+    query = filters_left.text_input("Search members", placeholder="Name, email, availability, activities")
+    status_filter = filters_mid.selectbox("Status", ["all", "pending", "approved", "waitlist", "declined"])
+    sort_mode = filters_right.selectbox("Sort by", ["Smart priority", "Newest", "Most sessions"])
+
+    members = data["members"]
+    if query.strip():
+        needle = query.lower().strip()
+        members = [
+            member for member in members
+            if needle in " ".join(
+                [
+                    member.get("name", ""),
+                    member.get("email", ""),
+                    member.get("availability", ""),
+                    member.get("activities", ""),
+                    member.get("intent", ""),
+                ]
+            ).lower()
+        ]
+    if status_filter != "all":
+        members = [member for member in members if get_admin(member["id"])["status"] == status_filter]
+    if sort_mode == "Smart priority":
+        members = sorted(
+            members,
+            key=lambda member: (
+                get_admin(member["id"])["status"] not in {"pending", "waitlist"},
+                -smart_member_score(member),
+                -member.get("sessions", 0),
+            ),
+        )
+    elif sort_mode == "Newest":
+        members = sorted(members, key=lambda member: member["ts"], reverse=True)
+    else:
+        members = sorted(members, key=lambda member: member.get("sessions", 0), reverse=True)
+
+    for member in members:
+        admin = get_admin(member["id"])
+        recommendation = smart_member_recommendation(member)
+        expander_label = f"{member['name']} · {member['email']} · score {smart_member_score(member)}"
+        with st.expander(expander_label):
+            left, right = st.columns([1.2, 0.9], gap="large")
+            with left:
+                st.markdown(
+                    f"""
+                    <div class="queue-card">
+                      {pill_html(recommendation["label"], recommendation["tone"])}
+                      {status_badge(admin["status"])}
+                      {tier_badge(admin["tier"])}
+                      <h4>{member["name"]}</h4>
+                      <div class="subtle">Submitted {member["ts"]} · {member["availability"]} · {member.get("sessions", 0)} past session(s)</div>
+                      <p>{member["intent"]}</p>
+                      <p style="margin-top:12px"><strong>Activities:</strong> {member["activities"]}<br><strong>Budget:</strong> {member["budget"]}<br><strong>Newsletter:</strong> {'Yes' if member["newsletter"] == 'yes' else 'No'}<br><strong>Cafe ideas:</strong> {member["cafe"]}</p>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+            with right:
+                with st.form(f"member_admin_v2_{member['id']}"):
+                    new_status = st.selectbox(
+                        "Status",
+                        ["pending", "approved", "waitlist", "declined"],
+                        index=["pending", "approved", "waitlist", "declined"].index(admin["status"]),
+                        key=f"member_status_v2_{member['id']}",
+                    )
+                    new_tier = st.selectbox(
+                        "Tier",
+                        ["fo", "ibp", "wi", "yhttb"],
+                        index=["fo", "ibp", "wi", "yhttb"].index(admin["tier"]),
+                        format_func=tier_label,
+                        key=f"member_tier_v2_{member['id']}",
+                    )
+                    fac_flag = st.checkbox("Facilitator candidate", value=admin["fac"], key=f"member_fac_v2_{member['id']}")
+                    notes = st.text_area("Founder notes", value=admin["notes"], key=f"member_notes_v2_{member['id']}")
+                    if st.form_submit_button("Save member review", use_container_width=True, type="primary"):
+                        data["admin"][member["id"]] = {
+                            "status": new_status,
+                            "tier": new_tier,
+                            "notes": notes,
+                            "fac": fac_flag,
+                        }
+                        persist()
+                        st.success("Member updated.")
+                        st.rerun()
+
+
+def render_planner() -> None:
+    data = data_store()
+    show_header("Planner", "Design sessions with smarter structure, staffing suggestions, and cleaner founder control.")
+    if "planner_name" not in st.session_state:
+        st.session_state.planner_name = ""
+        st.session_state.planner_act1 = ""
+        st.session_state.planner_act2 = ""
+        st.session_state.planner_act3 = ""
+        st.session_state.planner_transport = ""
+        st.session_state.planner_notes = ""
+
+    top_left, top_right = st.columns([1.05, 0.95], gap="large")
+    with top_left:
+        st.markdown(
+            editorial_card(
+                "Smart blueprint builder",
+                "Use a theme, mood, and venue type to generate a session structure you can edit before saving.",
+                eyebrow="Planning help",
+            ),
+            unsafe_allow_html=True,
+        )
+        with st.form("blueprint_form"):
+            bp_theme = st.text_input("Experience theme", placeholder="Canvas night, secret supper, slow brunch, city walk")
+            bp_cols = st.columns(3)
+            bp_tier = bp_cols[0].selectbox("Tier", ["fo", "ibp", "wi", "yhttb"], format_func=tier_label)
+            bp_mood = bp_cols[1].selectbox("Mood", ["calm", "playful", "intimate", "bold"])
+            bp_venue = bp_cols[2].text_input("Venue type", placeholder="Cafe, studio, old city, rooftop")
+            if st.form_submit_button("Generate blueprint", use_container_width=True, type="secondary"):
+                blueprint = build_experience_blueprint(bp_theme, bp_tier, bp_mood, bp_venue)
+                st.session_state.planner_name = blueprint["name"]
+                st.session_state.planner_tier = bp_tier
+                st.session_state.planner_venue = bp_venue
+                st.session_state.planner_act1 = blueprint["act1"]
+                st.session_state.planner_act2 = blueprint["act2"]
+                st.session_state.planner_act3 = blueprint["act3"]
+                st.session_state.planner_transport = blueprint["transport"]
+                st.session_state.planner_notes = blueprint["notes"]
+                st.rerun()
+    with top_right:
+        alerts = smart_operational_alerts(FOUNDER_ACCOUNT)
+        for alert in alerts[:3]:
+            st.markdown(insight_card_html(alert["title"], alert["detail"], alert["tone"]), unsafe_allow_html=True)
+
+    with st.expander("Create new experience", expanded=True):
+        with st.form("new_experience_v2"):
+            c1, c2, c3 = st.columns(3)
+            name = c1.text_input("Experience name", key="planner_name")
+            tier = c2.selectbox("Tier", ["fo", "ibp", "wi", "yhttb"], format_func=tier_label, key="planner_tier")
+            active_facs = [fac for fac in data["facs"] if fac["status"] != "offboarded"]
+            fac_map = {"Unassigned": ""}
+            for fac in active_facs:
+                fac_map[fac["name"]] = fac["id"]
+            fac_name = c3.selectbox("Facilitator", list(fac_map.keys()), key="planner_fac")
+            d1, d2, d3, d4 = st.columns(4)
+            exp_date = d1.date_input("Date", value=date.today(), key="planner_date")
+            exp_time = d2.text_input("Time", value="18:00", key="planner_time")
+            capacity = d3.number_input("Max attendees", min_value=1, value=8, key="planner_capacity")
+            price = d4.number_input("Price per person", min_value=0, value=500, key="planner_price")
+            venue = st.text_input("Venue", key="planner_venue")
+            act1 = st.text_area("Act 1 - Opener", key="planner_act1")
+            act2 = st.text_area("Act 2 - Activity", key="planner_act2")
+            act3 = st.text_area("Act 3 - Unwind", key="planner_act3")
+            transport = st.text_input("Transport", key="planner_transport")
+            notes = st.text_area("Notes / vibe", key="planner_notes")
+            if st.form_submit_button("Save experience", use_container_width=True, type="primary"):
+                if not name.strip():
+                    st.error("Experience name is required.")
+                else:
+                    data["exps"].append(
+                        {
+                            "id": uuid4().hex[:8],
+                            "name": name.strip(),
+                            "tier": tier,
+                            "date": exp_date.isoformat(),
+                            "time": exp_time,
+                            "max": int(capacity),
+                            "price": int(price),
+                            "venue": venue,
+                            "fac": fac_map[fac_name],
+                            "transport": transport,
+                            "act1": act1,
+                            "act2": act2,
+                            "act3": act3,
+                            "notes": notes,
+                        }
+                    )
+                    persist()
+                    st.success("Experience added.")
+                    st.rerun()
+
+    st.markdown(
+        "<div class='section-title'>Experience Deck</div>"
+        "<div class='section-note'>Every session stays editable through the data file, and staffing recommendations surface when coverage looks weak.</div>",
+        unsafe_allow_html=True,
+    )
+    for exp in upcoming_experiences():
+        fac = get_fac(exp["fac"]) if exp.get("fac") else None
+        suggestion = recommended_facilitator(exp) if (not fac or on_leave(fac["id"])) else None
+        with st.expander(f"{exp['name']} · {exp['date']}"):
+            st.markdown(
+                f"""
+                <div class="session-card">
+                  {tier_badge(exp["tier"])}
+                  <strong>{exp["name"]}</strong><br>
+                  <span class="subtle">{exp["time"]} · {exp["venue"]} · Max {exp["max"]} · {format_money(int(exp["price"]))}</span><br>
+                  <span class="subtle">Assigned facilitator: {fac["name"] if fac else "Unassigned"}{' · on leave' if fac and on_leave(fac['id']) else ''}</span>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            st.write(f"Act 1: {exp['act1']}")
+            st.write(f"Act 2: {exp['act2']}")
+            st.write(f"Act 3: {exp['act3']}")
+            if exp["notes"]:
+                st.caption(exp["notes"])
+            actions_left, actions_right = st.columns([1, 1])
+            if suggestion and actions_left.button(f"Assign {suggestion['name']}", key=f"assign_{exp['id']}"):
+                exp["fac"] = suggestion["id"]
+                persist()
+                st.success("Suggested facilitator assigned.")
+                st.rerun()
+            if actions_right.button("Delete experience", key=f"delete_planner_{exp['id']}"):
+                data["exps"] = [item for item in data["exps"] if item["id"] != exp["id"]]
+                persist()
+                st.rerun()
+
+
+def render_facilitator_team(user: Dict) -> None:
+    data = data_store()
+    if user["role"] != "founder":
+        fac = get_fac(user["fac_id"])
+        show_header("My Profile", "Your facilitator route stays focused on your access, your status, and your role context.")
+        if fac:
+            st.markdown(
+                f"""
+                <div class="queue-card">
+                  {status_badge(fac['status'])}
+                  {pill_html(f"{tier_label(fac['access'])} access", 'klein')}
+                  {pill_html(f"{fac['refs']} referral slots", 'citric')}
+                  <h4>{fac['name']}</h4>
+                  <div class="subtle">{fac['email']} · {fac['phone']}</div>
+                  <p>{fac['notes']}</p>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+        return
+
+    show_header("Facilitator Team", "Manage active facilitators, onboard flagged members, and update access without exposing passwords on-screen.")
+    render_stat_strip(
+        [
+            {"value": sum(1 for fac in data["facs"] if fac["status"] == "active"), "label": "Active", "note": "Running sessions", "accent": AQUAMARINE},
+            {"value": sum(1 for fac in data["facs"] if fac["status"] == "candidate"), "label": "Candidate", "note": "In observation", "accent": CITRIC},
+            {"value": sum(1 for fac in data["facs"] if on_leave(fac["id"]) and fac["status"] != "offboarded"), "label": "On leave", "note": "Needs coverage", "accent": TANGERINE},
+            {"value": len([m for m in data["members"] if get_admin(m["id"])["fac"]]), "label": "Flagged members", "note": "Potential facilitators", "accent": FUCHSIA},
+        ]
+    )
+
+    candidates = [
+        member for member in data["members"]
+        if get_admin(member["id"])["fac"] and not any(fac.get("member_id") == member["id"] for fac in data["facs"])
+    ]
+    if candidates:
+        st.markdown(
+            "<div class='section-title'>Onboarding Queue</div><div class='section-note'>Members already flagged by the founder can be converted into facilitator accounts here.</div>",
+            unsafe_allow_html=True,
+        )
+        for member in candidates:
+            with st.expander(f"{member['name']} · flagged candidate"):
+                default_uid = member["name"].split(" ")[0].lower() + ".fac"
+                with st.form(f"onboard_{member['id']}"):
+                    cols = st.columns(3)
+                    uid = cols[0].text_input("Login ID", value=default_uid, key=f"candidate_uid_{member['id']}")
+                    password = cols[1].text_input("Temporary password", type="password", value="", placeholder="Set a private temp password", key=f"candidate_pw_{member['id']}")
+                    access = cols[2].selectbox("Tier access", ["fo", "ibp", "wi", "yhttb"], format_func=tier_label, key=f"candidate_access_{member['id']}")
+                    notes = st.text_area("Notes", value="Onboarded from flagged member pipeline.", key=f"candidate_notes_{member['id']}")
+                    if st.form_submit_button("Create facilitator account", use_container_width=True, type="primary"):
+                        data["facs"].append(
+                            {
+                                "id": f"f{uuid4().hex[:5]}",
+                                "member_id": member["id"],
+                                "name": member["name"],
+                                "uid": uid.strip(),
+                                "password": password or f"nook-{uuid4().hex[:6]}",
+                                "email": member["email"],
+                                "phone": member.get("phone", ""),
+                                "status": "candidate",
+                                "access": access,
+                                "refs": 2,
+                                "sessions": max(member.get("sessions", 0), 2),
+                                "notes": notes,
+                            }
+                        )
+                        persist()
+                        st.success("Facilitator account created.")
+                        st.rerun()
+
+    with st.expander("Add facilitator manually", expanded=False):
+        with st.form("add_facilitator_v2"):
+            c1, c2 = st.columns(2)
+            name = c1.text_input("Full name")
+            uid = c2.text_input("Login ID", placeholder="name.fac")
+            c3, c4 = st.columns(2)
+            email = c3.text_input("Email")
+            phone = c4.text_input("Phone")
+            c5, c6, c7 = st.columns(3)
+            password = c5.text_input("Temporary password", type="password", value="", placeholder="Set a private temp password")
+            status = c6.selectbox("Status", ["candidate", "active", "offboarded"])
+            access = c7.selectbox("Tier access", ["fo", "ibp", "wi", "yhttb"], format_func=tier_label)
+            refs = st.number_input("Referral slots", min_value=0, value=2)
+            notes = st.text_area("Notes")
+            if st.form_submit_button("Save facilitator", use_container_width=True, type="primary"):
+                data["facs"].append(
+                    {
+                        "id": f"f{uuid4().hex[:5]}",
+                        "name": name,
+                        "uid": uid.strip(),
+                        "password": password or f"nook-{uuid4().hex[:6]}",
+                        "email": email,
+                        "phone": phone,
+                        "status": status,
+                        "access": access,
+                        "refs": int(refs),
+                        "sessions": 2,
+                        "notes": notes,
+                    }
+                )
+                persist()
+                st.success("Facilitator added.")
+                st.rerun()
+
+    st.markdown(
+        "<div class='section-title'>Team Profiles</div><div class='section-note'>Login IDs remain visible to the founder, but passwords are only editable through private reset fields.</div>",
+        unsafe_allow_html=True,
+    )
+    for fac in data["facs"]:
+        with st.expander(f"{fac['name']} · {fac['status'].title()}"):
+            with st.form(f"fac_edit_{fac['id']}"):
+                cols = st.columns([1, 1, 1])
+                status = cols[0].selectbox("Status", ["candidate", "active", "offboarded"], index=["candidate", "active", "offboarded"].index(fac["status"]), key=f"fac_status_edit_{fac['id']}")
+                access = cols[1].selectbox("Tier access", ["fo", "ibp", "wi", "yhttb"], index=["fo", "ibp", "wi", "yhttb"].index(fac["access"]), format_func=tier_label, key=f"fac_access_edit_{fac['id']}")
+                refs = cols[2].number_input("Referral slots", min_value=0, value=int(fac["refs"]), key=f"fac_refs_edit_{fac['id']}")
+                st.write(f"Login ID: `{fac['uid']}`")
+                st.write(f"Email: {fac['email']}")
+                st.write(f"Phone: {fac['phone']}")
+                reset_password = st.text_input("Reset password", type="password", value="", key=f"reset_pw_{fac['id']}")
+                notes = st.text_area("Notes", value=fac["notes"], key=f"fac_notes_v2_{fac['id']}")
+                save_col, off_col = st.columns(2)
+                if save_col.form_submit_button("Save facilitator", use_container_width=True, type="primary"):
+                    fac["status"] = status
+                    fac["access"] = access
+                    fac["refs"] = int(refs)
+                    fac["notes"] = notes
+                    if reset_password.strip():
+                        fac["password"] = reset_password
+                    persist()
+                    st.success("Facilitator updated.")
+                    st.rerun()
+                if off_col.form_submit_button("Offboard", use_container_width=True, type="secondary"):
+                    fac["status"] = "offboarded"
+                    persist()
+                    st.warning("Facilitator offboarded.")
+                    st.rerun()
+
+
+def render_messages(user: Dict) -> None:
+    data = data_store()
+    show_header("Messages", "Founder and facilitator conversations stay inside the system, with dynamic account routing instead of hard-coded users.")
+    for msg in data["msgs"]:
+        if msg["to"] == user["id"]:
+            msg["read"] = True
+    persist()
+
+    accounts = [{"id": account["id"], "name": account["name"]} for account in all_accounts()]
+    recipient_options = {account["name"]: account["id"] for account in accounts if account["id"] != user["id"]}
+    with st.expander("Send a new message", expanded=False):
+        with st.form("new_message_v2"):
+            recipient = st.selectbox("To", list(recipient_options.keys()))
+            subject = st.selectbox("Message type", ["General update", "Session reminder", "Request information from member", "Post-session update"])
+            body = st.text_area("Message")
+            if st.form_submit_button("Send message", use_container_width=True, type="primary"):
+                if body.strip():
+                    data["msgs"].append(
+                        {
+                            "id": uuid4().hex[:8],
+                            "from": user["id"],
+                            "to": recipient_options[recipient],
+                            "subject": subject,
+                            "body": body.strip(),
+                            "ts": datetime.now().strftime("%Y-%m-%d %H:%M"),
+                            "read": False,
+                        }
+                    )
+                    persist()
+                    st.success("Message sent.")
+                    st.rerun()
+                st.error("Write a message first.")
+
+    thread = [msg for msg in data["msgs"] if msg["to"] == user["id"] or msg["from"] == user["id"]]
+    thread.sort(key=lambda msg: msg["ts"], reverse=True)
+    for msg in thread:
+        st.markdown(
+            f"""
+            <div class="queue-card">
+              {pill_html(msg["subject"], "klein" if msg["from"] == user["id"] else "aqua")}
+              <h4>{resolve_user_name(msg["from"])}</h4>
+              <div class="subtle">To {resolve_user_name(msg["to"])} · {msg["ts"]}</div>
+              <p>{msg["body"]}</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+
+def render_docs() -> None:
+    show_header("Docs", "What this app now does, how access is handled, and where the functional pieces live.")
+    st.markdown(
+        editorial_card(
+            "System overview",
+            "This Streamlit version now behaves like a real internal operating layer: dynamic facilitator accounts, founder and facilitator routes, local persistence, smart dashboard signals, experience planning support, internal messaging, and private credential handling on the login screen.",
+            eyebrow="Architecture",
+        ),
+        unsafe_allow_html=True,
+    )
+    render_stat_strip(
+        [
+            {"value": "Founder", "label": "Primary route", "note": "Sees the full operating layer", "accent": FRAME_RED},
+            {"value": "Facilitator", "label": "Secondary route", "note": "Sees only assigned operational context", "accent": AQUAMARINE},
+            {"value": "JSON", "label": "Persistence", "note": "Local workspace data store", "accent": KLEIN_BLUE},
+            {"value": "Private", "label": "Passwords", "note": "No passwords shown on login", "accent": FUCHSIA},
+        ]
+    )
+    st.write("- Data is stored locally in `nook_data.json`.")
+    st.write("- Founder login still uses private credentials, but no password is shown anywhere on the login page.")
+    st.write("- Facilitator accounts are now generated from the live facilitator records, so new facilitators can actually log in.")
+    st.write("- Password resets happen through private fields inside the founder workspace instead of visible account lists.")
+
+
+def current_month_key() -> str:
+    return datetime.now().strftime("%Y-%m")
+
+
+def visible_private_entries(user: Dict) -> List[Dict]:
+    entries = data_store().get("private_entries", [])
+    if user["role"] == "founder":
+        return sorted(entries, key=lambda entry: entry["created_at"], reverse=True)
+    return sorted([entry for entry in entries if entry["owner_id"] == user["id"]], key=lambda entry: entry["created_at"], reverse=True)
+
+
+def monthly_referral_usage(fac_user_id: str, month_key: Optional[str] = None) -> int:
+    month_key = month_key or current_month_key()
+    return sum(1 for referral in data_store().get("referrals", []) if referral["fac_id"] == fac_user_id and referral["month"] == month_key)
+
+
+def sync_referral_status(member_id: str, new_status: str) -> None:
+    referral_map = {"approved": "approved", "waitlist": "waitlist", "declined": "rejected"}
+    for referral in data_store().get("referrals", []):
+        if referral.get("member_id") == member_id:
+            referral["status"] = referral_map.get(new_status, referral["status"])
+
+
+def render_home(user: Dict) -> None:
+    data = data_store()
+    show_header("Home", "A private workspace for personal notes and operating updates. Entries stay visible to the owner and the founder only.")
+    left, right = st.columns([1.08, 0.92], gap="large")
+    with left:
+        st.markdown(
+            editorial_card(
+                "Private desk",
+                "Write notes, session reads, reminders, and operational thoughts. Facilitators only see their own entries. Founder can view everyone's private desk for oversight.",
+                eyebrow="Workspace",
+            ),
+            unsafe_allow_html=True,
+        )
+        with st.form(f"private_entry_{user['id']}"):
+            kind = st.selectbox("Entry type", ["note", "update", "reminder"])
+            title = st.text_input("Title", placeholder="What do you want to remember?")
+            body = st.text_area("Body", placeholder="Write a founder-only or personal operating note.")
+            if st.form_submit_button("Save private entry", use_container_width=True, type="primary"):
+                if body.strip():
+                    data.setdefault("private_entries", []).append(
+                        {
+                            "id": uuid4().hex[:8],
+                            "owner_id": user["id"],
+                            "title": title.strip() or kind.title(),
+                            "body": body.strip(),
+                            "kind": kind,
+                            "created_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
+                        }
+                    )
+                    persist()
+                    st.success("Private entry saved.")
+                    st.rerun()
+                st.error("Write something first.")
+
+        st.markdown("<div class='section-title'>My Private Entries</div>", unsafe_allow_html=True)
+        mine = [entry for entry in visible_private_entries(user) if entry["owner_id"] == "manju"] if user["role"] == "founder" else visible_private_entries(user)
+        for entry in mine[:8]:
+            st.markdown(
+                f"""
+                <div class="queue-card">
+                  {pill_html(entry["kind"].title(), "black" if entry["kind"] == "note" else "tangerine")}
+                  <h4>{entry["title"]}</h4>
+                  <div class="subtle">{entry["created_at"]}</div>
+                  <p>{entry["body"]}</p>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+        if not mine:
+            st.info("No private entries yet.")
+    with right:
+        render_stat_strip(
+            [
+                {"value": len(visible_private_entries(user)), "label": "Visible entries", "note": "Private workspace items", "accent": FRAME_RED},
+                {"value": monthly_referral_usage(user["id"]) if user["role"] == "facilitator" else len(data.get("referrals", [])), "label": "Referral load", "note": "This month or total queue", "accent": TANGERINE},
+                {"value": len(smart_operational_alerts(user)), "label": "Smart alerts", "note": "Actionable cues", "accent": NOOK_BLACK},
+                {"value": len([msg for msg in data["msgs"] if msg["to"] == user["id"] and not msg["read"]]) if user["role"] != "founder" else len([msg for msg in data["msgs"] if msg["to"] == "manju" and not msg["read"]]), "label": "Unread", "note": "Internal messages", "accent": CITRIC},
+            ]
+        )
+        st.markdown("<div class='section-title'>Smart Suggestions</div><div class='section-note'>Operational prompts generated from live app data.</div>", unsafe_allow_html=True)
+        for alert in smart_operational_alerts(user):
+            st.markdown(insight_card_html(alert["title"], alert["detail"], alert["tone"]), unsafe_allow_html=True)
+        if user["role"] == "founder":
+            owners = ["All facilitators", *[fac["uid"] for fac in data["facs"] if fac["status"] != "offboarded"]]
+            selected_owner = st.selectbox("Team private feed", owners)
+            team_entries = [
+                entry for entry in data.get("private_entries", [])
+                if entry["owner_id"] != "manju" and (selected_owner == "All facilitators" or entry["owner_id"] == selected_owner)
+            ]
+            for entry in sorted(team_entries, key=lambda item: item["created_at"], reverse=True)[:8]:
+                st.markdown(
+                    f"""
+                    <div class="queue-card">
+                      {pill_html(resolve_user_name(entry["owner_id"]), "citric")}
+                      <h4>{entry["title"]}</h4>
+                      <div class="subtle">{entry["created_at"]}</div>
+                      <p>{entry["body"]}</p>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+        else:
+            st.markdown(
+                editorial_card(
+                    "Privacy rule",
+                    "Your notes and updates are visible only to you and the founder. Other facilitators cannot read them.",
+                    eyebrow="Access",
+                ),
+                unsafe_allow_html=True,
+            )
+
+
+def render_members() -> None:
+    data = data_store()
+    show_header("Applications", "Founder-only application review with direct accept, reject, and waitlist controls.")
+    counts = {
+        "all": len(data["members"]),
+        "pending": sum(1 for member in data["members"] if get_admin(member["id"])["status"] == "pending"),
+        "approved": sum(1 for member in data["members"] if get_admin(member["id"])["status"] == "approved"),
+        "waitlist": sum(1 for member in data["members"] if get_admin(member["id"])["status"] == "waitlist"),
+    }
+    render_stat_strip(
+        [
+            {"value": counts["all"], "label": "Applications", "note": "Demo-ready volume", "accent": FRAME_RED},
+            {"value": counts["pending"], "label": "Pending", "note": "Needs founder action", "accent": TANGERINE},
+            {"value": counts["approved"], "label": "Approved", "note": "Accepted members", "accent": NOOK_BLACK},
+            {"value": counts["waitlist"], "label": "Waitlist", "note": "Held for follow-up", "accent": CITRIC},
+        ]
+    )
+    filter_left, filter_mid, filter_right = st.columns([1.1, 0.8, 0.9])
+    query = filter_left.text_input("Search applications", placeholder="Name, email, source, activities")
+    status_filter = filter_mid.selectbox("Status", ["all", "pending", "approved", "waitlist", "declined"])
+    source_filter = filter_right.selectbox("Source", ["all", "organic", "referral"])
+    members = data["members"]
+    if query.strip():
+        needle = query.lower().strip()
+        members = [
+            member for member in members
+            if needle in " ".join(
+                [
+                    member.get("name", ""),
+                    member.get("email", ""),
+                    member.get("source", ""),
+                    member.get("activities", ""),
+                    member.get("intent", ""),
+                ]
+            ).lower()
+        ]
+    if status_filter != "all":
+        members = [member for member in members if get_admin(member["id"])["status"] == status_filter]
+    if source_filter != "all":
+        members = [member for member in members if member.get("source", "organic") == source_filter]
+    members = sorted(
+        members,
+        key=lambda member: (
+            get_admin(member["id"])["status"] not in {"pending", "waitlist"},
+            -smart_member_score(member),
+            member["ts"],
+        ),
+    )
+    for member in members:
+        admin = get_admin(member["id"])
+        recommendation = smart_member_recommendation(member)
+        with st.expander(f"{member['name']} · {member['email']} · {admin['status'].title()}"):
+            top_left, top_right = st.columns([1.15, 0.85], gap="large")
+            with top_left:
+                st.markdown(
+                    f"""
+                    <div class="queue-card">
+                      {pill_html(recommendation["label"], recommendation["tone"])}
+                      {status_badge(admin["status"])}
+                      {tier_badge(admin["tier"])}
+                      <h4>{member["name"]}</h4>
+                      <div class="subtle">Lead score {smart_member_score(member)} · Source {member.get("source", "organic")} · Submitted {member["ts"]}</div>
+                      <p>{member["intent"]}</p>
+                      <p style="margin-top:12px"><strong>Activities:</strong> {member["activities"]}<br><strong>Budget:</strong> {member["budget"]}<br><strong>Availability:</strong> {member["availability"]}<br><strong>Newsletter:</strong> {'Yes' if member['newsletter'] == 'yes' else 'No'}<br><strong>Referred by:</strong> {member.get("referred_by") or '—'}</p>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+                quick_a, quick_b, quick_c = st.columns(3)
+                if quick_a.button("Accept", key=f"accept_{member['id']}", use_container_width=True, type="primary"):
+                    admin["status"] = "approved"
+                    sync_referral_status(member["id"], "approved")
+                    persist()
+                    st.rerun()
+                if quick_b.button("Waitlist", key=f"waitlist_{member['id']}", use_container_width=True, type="secondary"):
+                    admin["status"] = "waitlist"
+                    sync_referral_status(member["id"], "waitlist")
+                    persist()
+                    st.rerun()
+                if quick_c.button("Reject", key=f"reject_{member['id']}", use_container_width=True, type="secondary"):
+                    admin["status"] = "declined"
+                    sync_referral_status(member["id"], "declined")
+                    persist()
+                    st.rerun()
+            with top_right:
+                with st.form(f"member_admin_actions_{member['id']}"):
+                    new_tier = st.selectbox("Tier", ["fo", "ibp", "wi", "yhttb"], index=["fo", "ibp", "wi", "yhttb"].index(admin["tier"]), format_func=tier_label)
+                    fac_flag = st.checkbox("Facilitator candidate", value=admin["fac"])
+                    notes = st.text_area("Founder notes", value=admin["notes"])
+                    if st.form_submit_button("Save founder notes", use_container_width=True, type="primary"):
+                        admin["tier"] = new_tier
+                        admin["fac"] = fac_flag
+                        admin["notes"] = notes
+                        persist()
+                        st.success("Application updated.")
+                        st.rerun()
+
+
+def render_referrals(user: Dict) -> None:
+    data = data_store()
+    show_header("Referrals", "Facilitators can refer up to three people a month. Founder retains final control over every application.")
+    if user["role"] == "founder":
+        render_stat_strip(
+            [
+                {"value": len(data.get("referrals", [])), "label": "All referrals", "note": "Tracked in system", "accent": FRAME_RED},
+                {"value": sum(1 for referral in data.get("referrals", []) if referral["status"] == "pending"), "label": "Pending", "note": "Awaiting founder action", "accent": TANGERINE},
+                {"value": sum(1 for referral in data.get("referrals", []) if referral["status"] == "approved"), "label": "Approved", "note": "Converted referrals", "accent": NOOK_BLACK},
+                {"value": sum(1 for referral in data.get("referrals", []) if referral["status"] == "rejected"), "label": "Rejected", "note": "Closed referrals", "accent": CITRIC},
+            ]
+        )
+        for referral in sorted(data.get("referrals", []), key=lambda item: item["created_at"], reverse=True):
+            member = next((candidate for candidate in data["members"] if candidate["id"] == referral["member_id"]), None)
+            admin = get_admin(member["id"]) if member else {"status": "pending", "tier": "fo", "notes": "", "fac": False}
+            with st.expander(f"{referral['candidate_name']} · referred by {resolve_user_name(referral['fac_id'])}"):
+                st.markdown(
+                    f"""
+                    <div class="queue-card">
+                      {pill_html(referral["experience_name"], "citric")}
+                      {status_badge(referral["status"] if referral["status"] != "rejected" else "declined")}
+                      <h4>{referral["candidate_name"]}</h4>
+                      <div class="subtle">{referral["created_at"]} · linked application {admin["status"].title()}</div>
+                      <p>{referral["reason"]}</p>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+                actions = st.columns(3)
+                if actions[0].button("Approve referral", key=f"approve_referral_{referral['id']}", use_container_width=True, type="primary") and member:
+                    referral["status"] = "approved"
+                    admin["status"] = "approved"
+                    persist()
+                    st.rerun()
+                if actions[1].button("Waitlist referral", key=f"wait_referral_{referral['id']}", use_container_width=True, type="secondary") and member:
+                    referral["status"] = "waitlist"
+                    admin["status"] = "waitlist"
+                    persist()
+                    st.rerun()
+                if actions[2].button("Reject referral", key=f"reject_referral_{referral['id']}", use_container_width=True, type="secondary") and member:
+                    referral["status"] = "rejected"
+                    admin["status"] = "declined"
+                    persist()
+                    st.rerun()
+    else:
+        used = monthly_referral_usage(user["id"])
+        remaining = max(0, 3 - used)
+        render_stat_strip(
+            [
+                {"value": used, "label": "Used this month", "note": "Referral submissions", "accent": FRAME_RED},
+                {"value": remaining, "label": "Remaining", "note": "Out of 3 monthly referrals", "accent": CITRIC},
+                {"value": sum(1 for referral in data.get("referrals", []) if referral["fac_id"] == user["id"] and referral["status"] == "approved"), "label": "Approved", "note": "Accepted by founder", "accent": NOOK_BLACK},
+                {"value": sum(1 for referral in data.get("referrals", []) if referral["fac_id"] == user["id"] and referral["status"] == "pending"), "label": "Pending", "note": "Still under review", "accent": TANGERINE},
+            ]
+        )
+        with st.expander("Submit referral", expanded=True):
+            if used >= 3:
+                st.warning("You have used all 3 referrals for this month.")
+            else:
+                with st.form("new_referral_form"):
+                    candidate_name = st.text_input("Candidate name")
+                    email = st.text_input("Email")
+                    phone = st.text_input("Phone")
+                    experience_name = st.selectbox("Best-fit experience", [exp["name"] for exp in upcoming_experiences(limit=6)])
+                    reason = st.text_area("Why are you referring this person?")
+                    if st.form_submit_button("Submit referral", use_container_width=True, type="primary"):
+                        if candidate_name.strip() and email.strip():
+                            member_id = f"mref{uuid4().hex[:6]}"
+                            data["members"].append(
+                                {
+                                    "id": member_id,
+                                    "name": candidate_name.strip(),
+                                    "email": email.strip(),
+                                    "phone": phone.strip(),
+                                    "budget": "Rs 800-1200",
+                                    "availability": "To be confirmed",
+                                    "activities": "Referral intake",
+                                    "intent": reason.strip() or "Referred by facilitator.",
+                                    "cafe": "To be discussed",
+                                    "message": "Facilitator referral",
+                                    "newsletter": "no",
+                                    "sessions": 0,
+                                    "ts": datetime.now().strftime("%Y-%m-%d %H:%M"),
+                                    "source": "referral",
+                                    "referred_by": user["id"],
+                                }
+                            )
+                            data["admin"][member_id] = {"status": "pending", "tier": "fo", "notes": "Referral intake.", "fac": False}
+                            data.setdefault("referrals", []).append(
+                                {
+                                    "id": f"r{uuid4().hex[:6]}",
+                                    "fac_id": user["id"],
+                                    "member_id": member_id,
+                                    "candidate_name": candidate_name.strip(),
+                                    "email": email.strip(),
+                                    "phone": phone.strip(),
+                                    "experience_name": experience_name,
+                                    "reason": reason.strip() or "Facilitator referral.",
+                                    "created_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
+                                    "month": current_month_key(),
+                                    "status": "pending",
+                                    "founder_note": "",
+                                }
+                            )
+                            persist()
+                            st.success("Referral submitted for founder review.")
+                            st.rerun()
+                        st.error("Candidate name and email are required.")
+        st.markdown("<div class='section-title'>My referrals</div>", unsafe_allow_html=True)
+        my_referrals = [referral for referral in data.get("referrals", []) if referral["fac_id"] == user["id"]]
+        for referral in sorted(my_referrals, key=lambda item: item["created_at"], reverse=True):
+            st.markdown(
+                f"""
+                <div class="queue-card">
+                  {pill_html(referral["experience_name"], "citric")}
+                  {status_badge(referral["status"] if referral["status"] != "rejected" else "declined")}
+                  <h4>{referral["candidate_name"]}</h4>
+                  <div class="subtle">{referral["created_at"]}</div>
+                  <p>{referral["reason"]}</p>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+
+def render_payments() -> None:
+    data = data_store()
+    show_header("Payments", "Founder-only payments and integrations layer for a smarter backend control room.")
+    paid_total = sum(payment["amount"] for payment in data["payments"] if payment["status"] == "paid")
+    pending_total = sum(payment["amount"] for payment in data["payments"] if payment["status"] == "pending")
+    approved_without_payment = [
+        member for member in data["members"]
+        if get_admin(member["id"])["status"] == "approved" and not any(payment["member_id"] == member["id"] for payment in data["payments"])
+    ]
+    render_stat_strip(
+        [
+            {"value": format_money(paid_total), "label": "Collected", "note": "Marked paid", "accent": FRAME_RED},
+            {"value": format_money(pending_total), "label": "Pending", "note": "Outstanding requests", "accent": TANGERINE},
+            {"value": len(approved_without_payment), "label": "No payment record", "note": "Needs payment setup", "accent": CITRIC},
+            {"value": "Razorpay", "label": "Gateway", "note": "Founder-only configuration", "accent": NOOK_BLACK},
+        ]
+    )
+    left, right = st.columns([1.05, 0.95], gap="large")
+    with left:
+        st.markdown("<div class='section-title'>Payment Queue</div>", unsafe_allow_html=True)
+        for payment in sorted(data["payments"], key=lambda item: (item["status"] != "pending", item["id"])):
+            member_name = next((member["name"] for member in data["members"] if member["id"] == payment["member_id"]), payment["member_id"])
+            st.markdown(
+                f"""
+                <div class="queue-card">
+                  {pill_html(payment.get("method", "Manual"), "black" if payment["status"] == "paid" else "tangerine")}
+                  {status_badge(payment["status"])}
+                  <h4>{member_name}</h4>
+                  <div class="subtle">{payment["label"]} · {format_money(int(payment["amount"]))}</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            action_left, action_right = st.columns([1, 1])
+            if payment["status"] != "paid" and action_left.button("Mark paid", key=f"mark_paid_{payment['id']}", use_container_width=True, type="primary"):
+                payment["status"] = "paid"
+                persist()
+                st.rerun()
+            if action_right.button("Remove", key=f"remove_payment_{payment['id']}", use_container_width=True, type="secondary"):
+                data["payments"] = [item for item in data["payments"] if item["id"] != payment["id"]]
+                persist()
+                st.rerun()
+    with right:
+        st.markdown(
+            editorial_card(
+                "Razorpay-ready configuration",
+                "The app can hold founder-only payment settings here. Real checkout and webhook wiring can be connected once live keys are available.",
+                eyebrow="Gateway",
+            ),
+            unsafe_allow_html=True,
+        )
+        with st.form("payment_settings_form"):
+            settings = data.setdefault("settings", default_data()["settings"])
+            razorpay_key_id = st.text_input("Razorpay Key ID", value=settings.get("razorpay_key_id", ""))
+            razorpay_key_secret = st.text_input("Razorpay Key Secret", value=settings.get("razorpay_key_secret", ""), type="password")
+            payment_link_base = st.text_input("Payment link base", value=settings.get("payment_link_base", ""), placeholder="https://rzp.io/...")
+            preferred_ai_api = st.text_input("Preferred AI API", value=settings.get("preferred_ai_api", "OpenAI or Groq"))
+            ops_note = st.text_area("Founder integration note", value=settings.get("ops_note", ""))
+            if st.form_submit_button("Save payment settings", use_container_width=True, type="primary"):
+                settings["razorpay_key_id"] = razorpay_key_id
+                settings["razorpay_key_secret"] = razorpay_key_secret
+                settings["payment_link_base"] = payment_link_base
+                settings["preferred_ai_api"] = preferred_ai_api
+                settings["ops_note"] = ops_note
+                persist()
+                st.success("Settings saved.")
+                st.rerun()
+        st.markdown("<div class='section-title'>Smart revenue prompts</div>", unsafe_allow_html=True)
+        for member in approved_without_payment[:6]:
+            if st.button(f"Create payment due for {member['name']}", key=f"create_due_{member['id']}", use_container_width=True, type="secondary"):
+                data["payments"].append(
+                    {
+                        "id": f"p{uuid4().hex[:6]}",
+                        "member_id": member["id"],
+                        "label": f"{tier_label(get_admin(member['id'])['tier'])} membership",
+                        "amount": 499 if get_admin(member["id"])["tier"] == "fo" else 999 if get_admin(member["id"])["tier"] == "ibp" else 1499 if get_admin(member["id"])["tier"] == "wi" else 2499,
+                        "status": "pending",
+                        "method": "Razorpay link" if settings.get("payment_link_base") else "Manual follow-up",
+                    }
+                )
+                persist()
+                st.rerun()
+        st.markdown(
+            editorial_card(
+                "Useful API options",
+                "OpenAI or Groq for richer founder summaries and membership-fit suggestions, Razorpay for payment links and checkout, and Google Sheets or Airtable if you want external ops sync later.",
+                eyebrow="Integrations",
+            ),
+            unsafe_allow_html=True,
+        )
+
+
+def render_docs() -> None:
+    show_header("Docs", "Founder-facing notes about access, demo data, and optional integrations.")
+    st.markdown(
+        editorial_card(
+            "Control room design",
+            "This app is intentionally internal. It now has a private home workspace, founder-only application decisions, facilitator referrals, seeded demo data, payment operations, and dynamic facilitator access.",
+            eyebrow="Overview",
+        ),
+        unsafe_allow_html=True,
+    )
+    render_stat_strip(
+        [
+            {"value": len(data_store()["members"]), "label": "Demo applications", "note": "Seeded for presentation", "accent": FRAME_RED},
+            {"value": len(data_store().get("referrals", [])), "label": "Referral records", "note": "Tracked monthly", "accent": TANGERINE},
+            {"value": "Private", "label": "Home notes", "note": "Visible to owner + founder", "accent": NOOK_BLACK},
+            {"value": "Ready", "label": "Payment layer", "note": "Razorpay-ready admin surface", "accent": CITRIC},
+        ]
+    )
+    st.write("- Login page no longer shows any passwords.")
+    st.write("- Founder can still reset facilitator passwords privately inside the team management area.")
+    st.write("- Facilitators can submit up to 3 referrals per month, but founder still approves or rejects the application.")
+    st.write("- The app includes seeded demo records so it feels usable in presentations and walkthroughs.")
+
+
+def sidebar_navigation(user: Dict) -> str:
+    founder_pages = [
+        "Home",
+        "Dashboard",
+        "Applications",
+        "Referrals",
+        "Planner",
+        "Payments",
+        "Facilitator Team",
+        "Leave",
+        "Messages",
+        "Docs",
+    ]
+    facilitator_pages = [
+        "Home",
+        "Dashboard",
+        "My Sessions",
+        "Referrals",
+        "My Profile",
+        "Leave",
+        "Messages",
+    ]
+    options = founder_pages if user["role"] == "founder" else facilitator_pages
+    if st.session_state.get("page") not in options:
+        st.session_state.page = "Home"
+    with st.sidebar:
+        st.markdown(
+            f"""
+            <div class="sidebar-brand">
+              <div class="eyebrow">Nook</div>
+              <h3>{user['name']}</h3>
+              <div class="subtle">{user['role'].title()} route</div>
+              <div class="swatch-row">
+                <div class="swatch" style="background:{FRAME_RED}"></div>
+                <div class="swatch" style="background:{PAPER}"></div>
+                <div class="swatch" style="background:{NOOK_BLACK}"></div>
+              </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.caption("Navigation")
+        for page in options:
+            is_active = st.session_state.page == page
+            if st.button(page, key=f"nav_new_{page}", use_container_width=True, type="primary" if is_active else "secondary"):
+                st.session_state.page = page
+        st.markdown("---")
+        if st.button("Log out", use_container_width=True, type="secondary"):
+            st.session_state.pop("current_user", None)
+            st.rerun()
+    return st.session_state.page
+
+
 def main() -> None:
     st.set_page_config(page_title="Nook Control Room", page_icon="N", layout="wide", initial_sidebar_state="expanded")
     if current_user() is None:
@@ -1142,14 +2844,23 @@ def main() -> None:
 
     inject_css()
     user = current_user()
+    if user["role"] == "facilitator" and not any(account["id"] == user["id"] for account in all_accounts()):
+        st.session_state.pop("current_user", None)
+        st.rerun()
     page = sidebar_navigation(user)
 
-    if page == "Dashboard":
+    if page == "Home":
+        render_home(user)
+    elif page == "Dashboard":
         render_dashboard(user)
-    elif page == "Members":
+    elif page == "Applications":
         render_members()
+    elif page == "Referrals":
+        render_referrals(user)
     elif page == "Planner":
         render_planner()
+    elif page == "Payments":
+        render_payments()
     elif page == "Facilitator Team":
         render_facilitator_team(user)
     elif page == "My Profile":
