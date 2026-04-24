@@ -11,13 +11,19 @@ import streamlit as st
 APP_DIR = Path(__file__).resolve().parent
 DATA_FILE = APP_DIR / "nook_data.json"
 
-ORANGE = "#E05C1A"
-BG = "#080808"
-SURFACE = "#121212"
-SURFACE_ALT = "#1A1A1A"
-BORDER = "rgba(255,255,255,0.08)"
-TEXT = "#F5F5F0"
-MUTED = "#9B9B96"
+KLEIN_BLUE = "#4100F5"
+CITRIC = "#CDF54E"
+AQUAMARINE = "#9BF0E7"
+FUCHSIA = "#E637A5"
+TANGERINE = "#FF463B"
+NOOK_BLACK = "#191414"
+ORANGE = TANGERINE
+BG = NOOK_BLACK
+SURFACE = "#231C1B"
+SURFACE_ALT = "#2D2423"
+BORDER = "rgba(155,240,231,0.18)"
+TEXT = "#FFFDF7"
+MUTED = "#DDD5CE"
 
 USERS = [
     {"id": "manju", "name": "Manju Singh", "role": "founder", "password": "founder2026"},
@@ -293,20 +299,47 @@ def tier_label(code: str) -> str:
 
 
 def status_badge(status: str) -> str:
-    colors = {
-        "pending": "#fbbf24",
-        "approved": "#22c55e",
-        "declined": "#ef4444",
-        "waitlist": "#a78bfa",
-        "active": "#22c55e",
-        "candidate": "#fbbf24",
-        "offboarded": "#ef4444",
+    styles = {
+        "pending": (CITRIC, NOOK_BLACK, "rgba(205,245,78,0.45)"),
+        "approved": (AQUAMARINE, NOOK_BLACK, "rgba(155,240,231,0.42)"),
+        "declined": (TANGERINE, NOOK_BLACK, "rgba(255,70,59,0.45)"),
+        "waitlist": (FUCHSIA, TEXT, "rgba(230,55,165,0.38)"),
+        "active": (AQUAMARINE, NOOK_BLACK, "rgba(155,240,231,0.42)"),
+        "candidate": (CITRIC, NOOK_BLACK, "rgba(205,245,78,0.45)"),
+        "offboarded": (NOOK_BLACK, TEXT, "rgba(255,253,247,0.16)"),
     }
-    color = colors.get(status, ORANGE)
+    bg, fg, border = styles.get(status, (TANGERINE, NOOK_BLACK, "rgba(255,70,59,0.45)"))
     return (
         f"<span style='padding:4px 10px;border-radius:999px;"
-        f"background:{color}22;color:{color};font-size:12px;font-weight:600'>{status.title()}</span>"
+        f"background:{bg};color:{fg};border:1px solid {border};"
+        f"font-size:12px;font-weight:700;letter-spacing:0.02em'>{status.title()}</span>"
     )
+
+
+def pill_html(text: str, tone: str = "aqua") -> str:
+    tone_map = {
+        "klein": (KLEIN_BLUE, TEXT, "rgba(255,255,255,0.12)"),
+        "citric": (CITRIC, NOOK_BLACK, "rgba(205,245,78,0.45)"),
+        "aqua": (AQUAMARINE, NOOK_BLACK, "rgba(155,240,231,0.42)"),
+        "fuchsia": (FUCHSIA, TEXT, "rgba(230,55,165,0.38)"),
+        "tangerine": (TANGERINE, NOOK_BLACK, "rgba(255,70,59,0.45)"),
+        "black": (NOOK_BLACK, TEXT, "rgba(255,253,247,0.16)"),
+    }
+    bg, fg, border = tone_map[tone]
+    return (
+        f"<span class='pill' style='background:{bg};color:{fg};border:1px solid {border};'>"
+        f"{text}</span>"
+    )
+
+
+def tier_badge(code: str) -> str:
+    tone = {
+        "fo": "klein",
+        "ibp": "aqua",
+        "wi": "citric",
+        "yhttb": "fuchsia",
+    }.get(code, "tangerine")
+    return pill_html(tier_label(code), tone=tone)
 
 
 def current_user() -> Optional[Dict]:
@@ -350,40 +383,135 @@ def inject_css() -> None:
     st.markdown(
         f"""
         <style>
+        :root {{
+            --klein-blue: {KLEIN_BLUE};
+            --citric: {CITRIC};
+            --aquamarine: {AQUAMARINE};
+            --fuchsia: {FUCHSIA};
+            --tangerine: {TANGERINE};
+            --nook-black: {NOOK_BLACK};
+            --text-main: {TEXT};
+            --text-soft: {MUTED};
+            --surface: {SURFACE};
+            --surface-alt: {SURFACE_ALT};
+        }}
         .stApp {{
             background:
-                radial-gradient(circle at top left, rgba(224,92,26,0.10), transparent 28%),
-                linear-gradient(135deg, #080808, #101010 55%, #141414);
+                radial-gradient(circle at top left, rgba(65,0,245,0.28), transparent 26%),
+                radial-gradient(circle at top right, rgba(230,55,165,0.16), transparent 24%),
+                radial-gradient(circle at bottom left, rgba(255,70,59,0.16), transparent 20%),
+                linear-gradient(135deg, #191414, #120f16 52%, #1b1715);
             color: {TEXT};
         }}
+        [data-testid="stAppViewContainer"] {{
+            background: transparent;
+        }}
+        .block-container {{
+            padding-top: 1.5rem;
+            padding-bottom: 3rem;
+        }}
         [data-testid="stSidebar"] {{
-            background: linear-gradient(180deg, #111111, #0b0b0b);
+            background:
+                radial-gradient(circle at top, rgba(65,0,245,0.25), transparent 32%),
+                linear-gradient(180deg, #191414, #130f14 50%, #0f0c12);
             border-right: 1px solid {BORDER};
+        }}
+        [data-testid="stSidebar"] * {{
+            color: {TEXT} !important;
         }}
         [data-testid="stMetric"] {{
             background: {SURFACE};
             border: 1px solid {BORDER};
             padding: 18px;
             border-radius: 18px;
+            box-shadow: 0 12px 24px rgba(0,0,0,0.16);
+        }}
+        [data-testid="stMetricLabel"],
+        [data-testid="stMetricValue"],
+        [data-testid="stMetricDelta"] {{
+            color: {TEXT} !important;
+        }}
+        h1, h2, h3, p, li, label, .stMarkdown, .stCaption, .stAlert {{
+            color: {TEXT};
         }}
         div[data-baseweb="input"] > div,
         div[data-baseweb="select"] > div,
+        div[data-baseweb="textarea"] > div,
         .stTextInput input,
         .stTextArea textarea,
-        .stDateInput input {{
+        .stDateInput input,
+        .stNumberInput input {{
             background: {SURFACE_ALT};
             color: {TEXT};
+            border: 1px solid rgba(155,240,231,0.24);
+        }}
+        div[data-baseweb="input"] input,
+        div[data-baseweb="select"] * ,
+        div[data-baseweb="textarea"] textarea,
+        .stDateInput * ,
+        .stNumberInput input {{
+            color: {TEXT} !important;
+        }}
+        div[data-baseweb="select"] > div,
+        div[data-baseweb="input"] > div,
+        div[data-baseweb="textarea"] > div {{
+            background: {SURFACE_ALT};
+            border-radius: 14px;
+        }}
+        .stTextInput label,
+        .stTextArea label,
+        .stDateInput label,
+        .stSelectbox label,
+        .stNumberInput label {{
+            color: {TEXT} !important;
+            font-weight: 600;
+        }}
+        .stButton > button,
+        .stForm [data-testid="stFormSubmitButton"] > button {{
+            border-radius: 14px;
+            border: 1px solid rgba(255,255,255,0.12);
+            min-height: 2.75rem;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+        }}
+        .stButton > button[kind="primary"],
+        .stForm [data-testid="stFormSubmitButton"] > button[kind="primary"] {{
+            background: linear-gradient(135deg, {CITRIC}, {AQUAMARINE});
+            color: {NOOK_BLACK};
+            border-color: rgba(155,240,231,0.4);
+            box-shadow: 0 12px 30px rgba(155,240,231,0.16);
+        }}
+        .stButton > button[kind="secondary"],
+        .stForm [data-testid="stFormSubmitButton"] > button[kind="secondary"] {{
+            background: rgba(255,255,255,0.035);
+            color: {TEXT};
+            border-color: rgba(255,255,255,0.1);
+        }}
+        .stButton > button:hover,
+        .stForm [data-testid="stFormSubmitButton"] > button:hover {{
+            border-color: rgba(205,245,78,0.55);
+            color: {TEXT};
+        }}
+        .stExpander {{
+            background: rgba(35,28,27,0.94);
+            border: 1px solid {BORDER};
+            border-radius: 18px;
+            overflow: hidden;
+        }}
+        .stExpander details summary p {{
+            color: {TEXT} !important;
+            font-weight: 600;
         }}
         .card {{
-            background: rgba(18,18,18,0.92);
+            background: linear-gradient(180deg, rgba(35,28,27,0.96), rgba(26,20,22,0.96));
             border: 1px solid {BORDER};
             border-radius: 20px;
             padding: 22px;
             margin-bottom: 16px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+            box-shadow: 0 12px 32px rgba(0,0,0,0.22);
         }}
         .eyebrow {{
-            color: {ORANGE};
+            color: {CITRIC};
             font-size: 12px;
             letter-spacing: 0.18em;
             text-transform: uppercase;
@@ -391,11 +519,13 @@ def inject_css() -> None:
             font-weight: 700;
         }}
         .hero {{
-            background: linear-gradient(135deg, rgba(224,92,26,0.16), rgba(255,255,255,0.02));
-            border: 1px solid rgba(224,92,26,0.25);
+            background:
+                linear-gradient(115deg, rgba(65,0,245,0.34), rgba(230,55,165,0.18) 38%, rgba(255,70,59,0.2) 70%, rgba(155,240,231,0.14));
+            border: 1px solid rgba(155,240,231,0.24);
             border-radius: 24px;
             padding: 28px;
             margin-bottom: 18px;
+            box-shadow: 0 18px 44px rgba(0,0,0,0.24);
         }}
         .hero h1 {{
             margin: 0;
@@ -406,9 +536,9 @@ def inject_css() -> None:
             color: {MUTED};
         }}
         .session-card {{
-            background: {SURFACE};
+            background: linear-gradient(180deg, rgba(29,23,24,0.98), rgba(24,19,21,0.98));
             border: 1px solid {BORDER};
-            border-left: 4px solid {ORANGE};
+            border-left: 4px solid {AQUAMARINE};
             border-radius: 18px;
             padding: 18px;
             margin-bottom: 14px;
@@ -422,10 +552,31 @@ def inject_css() -> None:
             padding: 4px 10px;
             border-radius: 999px;
             margin-right: 8px;
-            background: rgba(224,92,26,0.12);
-            border: 1px solid rgba(224,92,26,0.28);
-            color: {ORANGE};
+            font-weight: 700;
+            margin-bottom: 8px;
             font-size: 12px;
+        }}
+        .sidebar-brand {{
+            background: linear-gradient(160deg, rgba(65,0,245,0.26), rgba(25,20,20,0.82) 45%, rgba(255,70,59,0.18));
+            border: 1px solid rgba(155,240,231,0.18);
+            border-radius: 20px;
+            padding: 16px;
+            margin-bottom: 14px;
+        }}
+        .sidebar-brand h3 {{
+            margin: 0 0 4px 0;
+            color: {TEXT};
+        }}
+        .swatch-row {{
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }}
+        .swatch {{
+            width: 18px;
+            height: 18px;
+            border-radius: 999px;
+            border: 1px solid rgba(255,255,255,0.16);
         }}
         </style>
         """,
@@ -438,10 +589,10 @@ def login_screen() -> None:
     left, right = st.columns([1.25, 1], gap="large")
     with left:
         st.markdown(
-            """
+            f"""
             <div class="hero">
               <div class="eyebrow">Nook Control Room</div>
-              <h1>Your<br><span style="color:#E05C1A">third</span><br>place.</h1>
+              <h1>Your<br><span style="color:{CITRIC}">third</span><br>place.</h1>
               <p class="muted" style="margin-top:14px;font-size:15px;max-width:540px">
                 Founder and facilitator operations in one Streamlit control room, with separate access levels,
                 planning flows, leave tracking, member review, and internal messaging.
@@ -468,7 +619,7 @@ def login_screen() -> None:
         with st.form("login_form"):
             username = st.text_input("Username")
             password = st.text_input("Password", type="password")
-            submitted = st.form_submit_button("Enter Control Room", use_container_width=True)
+            submitted = st.form_submit_button("Enter Control Room", use_container_width=True, type="primary")
         if submitted:
             user = authenticate(username.strip(), password)
             if user:
@@ -479,33 +630,54 @@ def login_screen() -> None:
 
 
 def sidebar_navigation(user: Dict) -> str:
+    founder_pages = [
+        "Dashboard",
+        "Members",
+        "Planner",
+        "Facilitator Team",
+        "Leave",
+        "Messages",
+        "Docs",
+    ]
+    facilitator_pages = [
+        "Dashboard",
+        "My Sessions",
+        "My Profile",
+        "Leave",
+        "Messages",
+    ]
+    options = founder_pages if user["role"] == "founder" else facilitator_pages
+    if st.session_state.get("page") not in options:
+        st.session_state.page = options[0]
+
     with st.sidebar:
-        st.markdown("## Nook")
-        st.caption(f"{user['name']} · {user['role'].title()}")
+        st.markdown(
+            f"""
+            <div class="sidebar-brand">
+              <div class="eyebrow">Logged in</div>
+              <h3>{user['name']}</h3>
+              <div class="subtle">{user['role'].title()} view</div>
+              <div class="swatch-row">
+                <div class="swatch" style="background:{KLEIN_BLUE}"></div>
+                <div class="swatch" style="background:{CITRIC}"></div>
+                <div class="swatch" style="background:{AQUAMARINE}"></div>
+                <div class="swatch" style="background:{FUCHSIA}"></div>
+                <div class="swatch" style="background:{TANGERINE}"></div>
+              </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.caption("Navigation")
+        for page in options:
+            is_active = st.session_state.page == page
+            if st.button(page, key=f"nav_{page}", use_container_width=True, type="primary" if is_active else "secondary"):
+                st.session_state.page = page
         st.markdown("---")
-        founder_pages = [
-            "Dashboard",
-            "Members",
-            "Planner",
-            "Facilitator Team",
-            "Leave",
-            "Messages",
-            "Docs",
-        ]
-        facilitator_pages = [
-            "Dashboard",
-            "My Sessions",
-            "My Profile",
-            "Leave",
-            "Messages",
-        ]
-        options = founder_pages if user["role"] == "founder" else facilitator_pages
-        current = st.radio("Navigate", options, label_visibility="collapsed")
-        st.markdown("---")
-        if st.button("Log out", use_container_width=True):
+        if st.button("Log out", use_container_width=True, type="secondary"):
             st.session_state.pop("current_user", None)
             st.rerun()
-    return current
+    return st.session_state.page
 
 
 def show_header(title: str, subtitle: str) -> None:
@@ -545,7 +717,7 @@ def render_dashboard(user: Dict) -> None:
                       <strong>{member["name"]}</strong><br>
                       <span class="subtle">{member["email"]} · {member["ts"]}</span><br><br>
                       {status_badge(admin["status"])}
-                      <span class="pill">{tier_label(admin["tier"])}</span>
+                      {tier_badge(admin["tier"])}
                     </div>
                     """,
                     unsafe_allow_html=True,
@@ -557,7 +729,7 @@ def render_dashboard(user: Dict) -> None:
                 st.markdown(
                     f"""
                     <div class="session-card">
-                      <div class="pill">{tier_label(exp["tier"])}</div>
+                      {tier_badge(exp["tier"])}
                       <strong>{exp["name"]}</strong><br>
                       <span class="subtle">{exp["date"]} · {exp["time"]} · {exp["venue"]}</span><br>
                       <span class="subtle">Facilitator: {fac["name"] if fac else "Unassigned"}</span>
@@ -581,7 +753,7 @@ def render_dashboard(user: Dict) -> None:
             st.markdown(
                 f"""
                 <div class="session-card">
-                  <div class="pill">{tier_label(exp["tier"])}</div>
+                  {tier_badge(exp["tier"])}
                   <strong>{exp["name"]}</strong><br>
                   <span class="subtle">{exp["date"]} · {exp["time"]} · {exp["venue"]} · Max {exp["max"]}</span>
                   <hr style="border-color:{BORDER}">
@@ -698,7 +870,7 @@ def render_planner() -> None:
             st.markdown(
                 f"""
                 <div class="session-card">
-                  <div class="pill">{tier_label(exp["tier"])}</div>
+                  {tier_badge(exp["tier"])}
                   <span class="subtle">{exp["time"]} · {exp["venue"]} · Max {exp["max"]} · ₹{exp["price"]}</span><br>
                   <span class="subtle">Facilitator: {fac["name"] if fac else "Unassigned"}{' · On leave' if fac and on_leave(fac['id']) else ''}</span>
                 </div>
@@ -729,9 +901,9 @@ def render_facilitator_team(user: Dict) -> None:
                   <h3 style="margin-top:0">{fac['name']}</h3>
                   <div class="subtle">{fac['email']} · {fac['phone']}</div><br>
                   {status_badge(fac['status'])}
-                  <span class="pill">{tier_label(fac['access'])} access</span>
-                  <span class="pill">{fac['refs']} referral slots</span>
-                  <span class="pill">{fac['sessions']} sessions attended</span>
+                  {pill_html(f"{tier_label(fac['access'])} access", tone="klein")}
+                  {pill_html(f"{fac['refs']} referral slots", tone="citric")}
+                  {pill_html(f"{fac['sessions']} sessions attended", tone="aqua")}
                   <p class="muted" style="margin-top:14px">{fac['notes']}</p>
                 </div>
                 """,
@@ -876,7 +1048,7 @@ def render_my_sessions(user: Dict) -> None:
         st.markdown(
             f"""
             <div class="session-card">
-              <div class="pill">{tier_label(exp["tier"])}</div>
+              {tier_badge(exp["tier"])}
               <strong>{exp["name"]}</strong><br>
               <span class="subtle">{exp["date"]} · {exp["time"]} · {exp["venue"]} · ₹{exp["price"]}/person</span><br><br>
               <div class="subtle"><strong>Act 1:</strong> {exp["act1"]}</div>
@@ -963,7 +1135,7 @@ def render_docs() -> None:
 
 
 def main() -> None:
-    st.set_page_config(page_title="Nook Control Room", page_icon="N", layout="wide")
+    st.set_page_config(page_title="Nook Control Room", page_icon="N", layout="wide", initial_sidebar_state="expanded")
     if current_user() is None:
         login_screen()
         return
