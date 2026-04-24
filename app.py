@@ -771,31 +771,96 @@ def inject_css() -> None:
             --aquamarine: {AQUAMARINE};
             --fuchsia: {FUCHSIA};
             --tangerine: {TANGERINE};
+            --cream: #fff7ef;
+            --glow: rgba(216,92,26,0.24);
+            --glow-strong: rgba(216,92,26,0.42);
+            --shadow-soft: 0 22px 55px rgba(17,16,14,0.12);
+            --shadow-float: 0 36px 90px rgba(17,16,14,0.22);
+            --radius-lg: 24px;
+            --radius-xl: 34px;
         }}
         html, body, [class*="css"] {{
             font-family: "Space Grotesk", sans-serif;
         }}
+        html {{
+            scroll-behavior: smooth;
+        }}
+        body {{
+            background:
+                radial-gradient(circle at 18% 4%, rgba(255,173,113,0.35), transparent 16%),
+                radial-gradient(circle at 86% 10%, rgba(216,92,26,0.22), transparent 18%),
+                linear-gradient(180deg, #1c1712 0%, #2a2119 13%, #ead4bb 30%, #f2e7d8 100%);
+        }}
         .stApp {{
-            background: var(--frame-red);
+            background:
+                radial-gradient(circle at 18% 0%, rgba(255,165,92,0.28), transparent 18%),
+                radial-gradient(circle at 88% 14%, rgba(216,92,26,0.18), transparent 22%),
+                linear-gradient(180deg, #1c1712 0%, #2a2119 13%, #ead4bb 30%, #f2e7d8 100%);
             color: var(--ink);
         }}
         [data-testid="stAppViewContainer"] {{
             background: transparent;
         }}
+        [data-testid="stAppViewContainer"]::before {{
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background:
+                linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+            background-size: 34px 34px;
+            mask-image: linear-gradient(180deg, rgba(0,0,0,0.55), transparent 36%, rgba(0,0,0,0.18));
+            opacity: 0.18;
+            z-index: 0;
+        }}
         .block-container {{
-            max-width: 1180px;
-            margin: 28px auto 48px auto;
-            padding: 26px 34px 48px 34px;
-            background: var(--paper);
-            border: 1px solid rgba(15,14,13,0.14);
-            box-shadow: 0 24px 60px rgba(0,0,0,0.18);
+            max-width: 1220px;
+            margin: 24px auto 54px auto;
+            padding: 30px 36px 54px 36px;
+            background:
+                linear-gradient(180deg, rgba(255,250,244,0.90), rgba(242,231,216,0.98)),
+                linear-gradient(135deg, rgba(255,255,255,0.75), rgba(255,255,255,0.30));
+            border: 1px solid rgba(17,16,14,0.08);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-float);
+            position: relative;
+            overflow: hidden;
+        }}
+        .block-container::before {{
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background:
+                radial-gradient(circle at 84% 8%, rgba(255,189,133,0.35), transparent 22%),
+                radial-gradient(circle at 8% 0%, rgba(216,92,26,0.16), transparent 22%),
+                linear-gradient(180deg, rgba(255,255,255,0.32), transparent 26%);
+        }}
+        .block-container > * {{
+            position: relative;
+            z-index: 1;
         }}
         [data-testid="stSidebar"] {{
-            background: var(--paper-alt);
-            border-right: 1px solid rgba(15,14,13,0.10);
+            background:
+                radial-gradient(circle at 18% 0%, rgba(216,92,26,0.24), transparent 20%),
+                linear-gradient(180deg, #0f0d0b 0%, #17120f 56%, #211912 100%);
+            border-right: 1px solid rgba(255,255,255,0.05);
+            box-shadow: 18px 0 48px rgba(0,0,0,0.18);
+        }}
+        [data-testid="stSidebar"]::before {{
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background:
+                linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 28px 28px;
+            opacity: 0.45;
         }}
         [data-testid="stSidebar"] * {{
-            color: var(--ink) !important;
+            color: #f8eadc !important;
         }}
         [data-testid="stSidebar"] .block-container {{
             margin: 0;
@@ -805,12 +870,23 @@ def inject_css() -> None:
             box-shadow: none;
         }}
         [data-testid="stMetric"] {{
-            background: var(--paper-alt);
-            border: 1px solid rgba(15,14,13,0.10);
-            border-top: 3px solid var(--frame-red);
+            background:
+                linear-gradient(180deg, rgba(255,250,245,0.98), rgba(247,238,227,0.96));
+            border: 1px solid rgba(17,16,14,0.08);
             padding: 16px;
-            border-radius: 0;
-            box-shadow: none;
+            border-radius: 26px;
+            box-shadow: var(--shadow-soft);
+            overflow: hidden;
+            position: relative;
+        }}
+        [data-testid="stMetric"]::after {{
+            content: "";
+            position: absolute;
+            inset: auto -24px -24px auto;
+            width: 96px;
+            height: 96px;
+            background: radial-gradient(circle, rgba(216,92,26,0.22), transparent 70%);
+            filter: blur(8px);
         }}
         [data-testid="stMetricLabel"],
         [data-testid="stMetricValue"],
@@ -820,13 +896,14 @@ def inject_css() -> None:
         h1, h2, h3, h4 {{
             font-family: "Syne", "Space Grotesk", sans-serif;
             color: var(--ink);
-            letter-spacing: -0.04em;
+            letter-spacing: -0.05em;
         }}
         h1, h2, h3, p, li, label, .stMarkdown, .stCaption, .stAlert {{
             color: var(--ink);
         }}
         .stMarkdown a {{
             color: var(--frame-red);
+            text-decoration: none;
         }}
         div[data-baseweb="input"] > div,
         div[data-baseweb="select"] > div,
@@ -835,9 +912,11 @@ def inject_css() -> None:
         .stTextArea textarea,
         .stDateInput input,
         .stNumberInput input {{
-            background: #ffffff;
+            background: rgba(255,248,241,0.94);
             color: var(--ink);
-            border: 1px solid rgba(15,14,13,0.14);
+            border: 1px solid rgba(17,16,14,0.10);
+            border-radius: 18px;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.72);
         }}
         div[data-baseweb="input"] input,
         div[data-baseweb="select"] * ,
@@ -849,8 +928,8 @@ def inject_css() -> None:
         div[data-baseweb="select"] > div,
         div[data-baseweb="input"] > div,
         div[data-baseweb="textarea"] > div {{
-            background: #ffffff;
-            border-radius: 0;
+            background: rgba(255,248,241,0.94);
+            border-radius: 18px;
         }}
         .stTextInput label,
         .stTextArea label,
@@ -865,47 +944,94 @@ def inject_css() -> None:
         }}
         .stButton > button,
         .stForm [data-testid="stFormSubmitButton"] > button {{
-            border-radius: 0;
-            border: 1px solid rgba(15,14,13,0.14);
+            border-radius: 999px;
+            border: 1px solid rgba(17,16,14,0.10);
             min-height: 2.9rem;
             font-weight: 700;
             letter-spacing: 0.08em;
             text-transform: uppercase;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
         }}
         .stButton > button[kind="primary"],
         .stForm [data-testid="stFormSubmitButton"] > button[kind="primary"] {{
-            background: var(--ink);
-            color: var(--paper);
-            border-color: var(--ink);
-            box-shadow: none;
+            background: linear-gradient(135deg, #ffb77d 0%, #f08a44 34%, #d85c1a 100%);
+            color: #150f0c;
+            border-color: rgba(216,92,26,0.42);
+            box-shadow: 0 14px 30px rgba(216,92,26,0.24);
         }}
         .stButton > button[kind="secondary"],
         .stForm [data-testid="stFormSubmitButton"] > button[kind="secondary"] {{
-            background: transparent;
+            background: rgba(255,248,241,0.74);
             color: var(--ink);
-            border-color: rgba(15,14,13,0.14);
+            border-color: rgba(17,16,14,0.08);
+            box-shadow: 0 8px 24px rgba(17,16,14,0.06);
         }}
         .stButton > button:hover,
         .stForm [data-testid="stFormSubmitButton"] > button:hover {{
             border-color: var(--frame-red);
             color: var(--ink);
+            transform: translateY(-1px);
+            box-shadow: 0 16px 32px rgba(17,16,14,0.10);
+        }}
+        [data-testid="stSidebar"] .stButton > button {{
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(255,255,255,0.10);
+            color: #f8eadc;
+            box-shadow: none;
+        }}
+        [data-testid="stSidebar"] .stButton > button[kind="primary"] {{
+            background: linear-gradient(135deg, #ffc891 0%, #f08a44 40%, #d85c1a 100%);
+            color: #110f0d !important;
+            border-color: rgba(255,173,113,0.34);
+            box-shadow: 0 14px 32px rgba(216,92,26,0.24);
+        }}
+        [data-testid="stSidebar"] .stButton > button[kind="secondary"]:hover {{
+            background: rgba(255,166,92,0.12);
+            border-color: rgba(255,193,141,0.28);
+            color: #fff2e7 !important;
         }}
         .stExpander {{
-            background: var(--paper-alt);
-            border: 1px solid rgba(15,14,13,0.10);
-            border-radius: 0;
+            background: linear-gradient(180deg, rgba(255,250,245,0.97), rgba(247,238,227,0.95));
+            border: 1px solid rgba(17,16,14,0.08);
+            border-radius: 24px;
             overflow: hidden;
+            box-shadow: var(--shadow-soft);
         }}
         .stExpander details summary p {{
             color: var(--ink) !important;
             font-weight: 600;
         }}
         .card {{
-            background: var(--paper-alt);
-            border: 1px solid rgba(15,14,13,0.10);
+            background: linear-gradient(180deg, rgba(255,250,245,0.98), rgba(247,238,227,0.95));
+            border: 1px solid rgba(17,16,14,0.08);
             padding: 22px;
             margin-bottom: 18px;
-            box-shadow: none;
+            box-shadow: var(--shadow-soft);
+            border-radius: 28px;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.18s ease, box-shadow 0.18s ease;
+        }}
+        .card::after,
+        .queue-card::after,
+        .session-card::after,
+        .insight-card::after {{
+            content: "";
+            position: absolute;
+            top: -26px;
+            right: -18px;
+            width: 110px;
+            height: 110px;
+            background: radial-gradient(circle, rgba(255,186,126,0.34), transparent 70%);
+            pointer-events: none;
+        }}
+        .card:hover,
+        .queue-card:hover,
+        .session-card:hover,
+        .insight-card:hover,
+        .stat-cell:hover {{
+            transform: translateY(-2px);
+            box-shadow: 0 28px 60px rgba(17,16,14,0.14);
         }}
         .eyebrow {{
             color: var(--frame-red);
@@ -919,29 +1045,33 @@ def inject_css() -> None:
             display: grid;
             grid-template-columns: 1.35fr .8fr;
             gap: 24px;
-            border-top: 2px solid var(--frame-red);
-            padding: 18px 0 28px 0;
+            padding: 8px 0 24px 0;
             margin-bottom: 26px;
+            align-items: stretch;
         }}
         .hero h1 {{
             margin: 0;
-            font-size: clamp(52px, 8vw, 94px);
-            line-height: 0.88;
+            font-size: clamp(56px, 8vw, 98px);
+            line-height: 0.86;
+            max-width: 8ch;
+            text-wrap: balance;
         }}
         .hero-copy {{
-            font-size: 14px;
-            line-height: 1.6;
+            font-size: 15px;
+            line-height: 1.7;
             max-width: 420px;
+            color: var(--soft-ink);
         }}
         .muted {{
             color: var(--soft-ink);
         }}
         .session-card {{
-            background: var(--paper-alt);
-            border: 1px solid rgba(15,14,13,0.10);
-            border-left: 4px solid var(--frame-red);
+            background: linear-gradient(180deg, rgba(255,250,245,0.98), rgba(247,238,227,0.95));
+            border: 1px solid rgba(17,16,14,0.08);
             padding: 18px;
             margin-bottom: 14px;
+            border-radius: 24px;
+            box-shadow: var(--shadow-soft);
         }}
         .subtle {{
             color: var(--soft-ink);
@@ -949,22 +1079,26 @@ def inject_css() -> None:
         }}
         .pill {{
             display: inline-block;
-            padding: 4px 10px;
+            padding: 6px 11px;
             border-radius: 999px;
             margin-right: 8px;
             font-weight: 700;
             margin-bottom: 8px;
             font-size: 12px;
+            backdrop-filter: blur(6px);
         }}
         .sidebar-brand {{
-            background: var(--paper);
-            border: 1px solid rgba(15,14,13,0.10);
-            padding: 16px;
-            margin-bottom: 14px;
+            background:
+                linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
+            border: 1px solid rgba(255,255,255,0.10);
+            padding: 18px;
+            margin-bottom: 16px;
+            border-radius: 28px;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
         }}
         .sidebar-brand h3 {{
             margin: 0 0 4px 0;
-            color: var(--ink);
+            color: #fff4ea;
         }}
         .swatch-row {{
             display: flex;
@@ -975,53 +1109,77 @@ def inject_css() -> None:
             width: 18px;
             height: 18px;
             border-radius: 999px;
-            border: 1px solid rgba(255,255,255,0.16);
+            border: 1px solid rgba(255,255,255,0.20);
+            box-shadow: 0 0 18px rgba(255,255,255,0.10);
         }}
         .editorial-rail {{
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            border-left: 1px solid rgba(15,14,13,0.12);
-            padding-left: 22px;
+            padding-left: 0;
+            gap: 18px;
         }}
         .editorial-visual {{
-            min-height: 320px;
+            min-height: 340px;
             background:
-                linear-gradient(90deg, rgba(15,14,13,0.06) 0 2%, transparent 2% 100%),
-                repeating-linear-gradient(90deg, rgba(15,14,13,0.04) 0 2px, transparent 2px 26px),
-                linear-gradient(140deg, #e7e2da, #ffffff 60%, #efeae1);
-            border: 1px solid rgba(15,14,13,0.08);
+                radial-gradient(circle at 24% 26%, rgba(255,192,131,0.86), transparent 18%),
+                radial-gradient(circle at 70% 36%, rgba(216,92,26,0.66), transparent 18%),
+                radial-gradient(circle at 82% 78%, rgba(17,16,14,0.20), transparent 16%),
+                linear-gradient(135deg, #20170f 0%, #e9d6c2 52%, #fff7ef 100%);
+            border: 1px solid rgba(17,16,14,0.08);
             position: relative;
             overflow: hidden;
+            border-radius: 32px;
+            box-shadow: var(--shadow-soft);
+        }}
+        .editorial-visual::before {{
+            content: "";
+            position: absolute;
+            left: 6%;
+            bottom: 8%;
+            width: 44%;
+            height: 24%;
+            background: rgba(255,255,255,0.34);
+            border: 1px solid rgba(255,255,255,0.40);
+            border-radius: 999px;
+            backdrop-filter: blur(18px);
         }}
         .editorial-visual::after {{
             content: "";
             position: absolute;
-            right: 14%;
-            bottom: 10%;
-            width: 14px;
-            height: 32px;
-            border-radius: 12px;
-            background: var(--frame-red);
-            box-shadow: 0 0 0 4px rgba(255,255,255,0.75);
+            right: 11%;
+            top: 10%;
+            width: 128px;
+            height: 128px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,244,234,0.92), rgba(255,244,234,0.10) 70%);
+            filter: blur(6px);
         }}
         .stat-strip {{
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 14px;
-            margin: 10px 0 28px 0;
+            gap: 16px;
+            margin: 12px 0 30px 0;
         }}
         .stat-cell {{
-            padding-top: 10px;
+            padding: 18px;
+            border-radius: 24px;
+            border: 1px solid rgba(17,16,14,0.08);
+            background: linear-gradient(180deg, rgba(255,250,245,0.94), rgba(247,238,227,0.92));
+            box-shadow: var(--shadow-soft);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.18s ease, box-shadow 0.18s ease;
         }}
         .stat-line {{
-            width: 100%;
-            height: 2px;
-            margin-bottom: 14px;
+            width: 54px;
+            height: 6px;
+            margin-bottom: 18px;
+            border-radius: 999px;
         }}
         .stat-value {{
             font-family: "Syne", "Space Grotesk", sans-serif;
-            font-size: clamp(26px, 3vw, 42px);
+            font-size: clamp(30px, 3vw, 50px);
             line-height: 1;
             letter-spacing: -0.05em;
             color: var(--ink);
@@ -1040,9 +1198,13 @@ def inject_css() -> None:
         }}
         .insight-card {{
             padding: 18px;
-            background: var(--paper-alt);
-            border: 1px solid rgba(15,14,13,0.10);
+            background: linear-gradient(180deg, rgba(255,250,245,0.98), rgba(247,238,227,0.95));
+            border: 1px solid rgba(17,16,14,0.08);
             margin-bottom: 14px;
+            border-radius: 26px;
+            box-shadow: var(--shadow-soft);
+            position: relative;
+            overflow: hidden;
         }}
         .insight-card p {{
             margin: 10px 0 0 0;
@@ -1052,7 +1214,7 @@ def inject_css() -> None:
         }}
         .editorial-card h3 {{
             margin: 0 0 8px 0;
-            font-size: 28px;
+            font-size: 30px;
         }}
         .editorial-card p {{
             margin: 0;
@@ -1061,28 +1223,34 @@ def inject_css() -> None:
         }}
         .section-title {{
             font-family: "Syne", "Space Grotesk", sans-serif;
-            font-size: clamp(28px, 4vw, 54px);
-            line-height: 0.95;
-            letter-spacing: -0.05em;
-            margin: 18px 0 8px 0;
+            font-size: clamp(32px, 4vw, 60px);
+            line-height: 0.92;
+            letter-spacing: -0.06em;
+            margin: 16px 0 8px 0;
             text-transform: uppercase;
+            max-width: 11ch;
+            text-wrap: balance;
         }}
         .section-note {{
             max-width: 520px;
             font-size: 14px;
-            line-height: 1.6;
+            line-height: 1.7;
             color: var(--soft-ink);
             margin-bottom: 20px;
         }}
         .queue-card {{
             padding: 18px;
-            border: 1px solid rgba(15,14,13,0.10);
-            background: var(--paper-alt);
+            border: 1px solid rgba(17,16,14,0.08);
+            background: linear-gradient(180deg, rgba(255,250,245,0.98), rgba(247,238,227,0.95));
             margin-bottom: 14px;
+            border-radius: 26px;
+            box-shadow: var(--shadow-soft);
+            position: relative;
+            overflow: hidden;
         }}
         .queue-card h4 {{
             margin: 6px 0 2px 0;
-            font-size: 22px;
+            font-size: 24px;
         }}
         .queue-card p {{
             margin: 10px 0 0 0;
@@ -1090,13 +1258,29 @@ def inject_css() -> None:
             line-height: 1.6;
             font-size: 14px;
         }}
+        [data-testid="stAlert"] {{
+            border-radius: 22px;
+            border: 1px solid rgba(17,16,14,0.08);
+            background: linear-gradient(180deg, rgba(255,250,245,0.98), rgba(247,238,227,0.95));
+            box-shadow: var(--shadow-soft);
+        }}
+        [data-testid="stMarkdownContainer"] code,
+        code {{
+            background: rgba(17,16,14,0.08);
+            border-radius: 8px;
+            padding: 0.15rem 0.35rem;
+            color: var(--ink);
+        }}
+        hr {{
+            border: none;
+            height: 1px;
+            background: linear-gradient(90deg, rgba(216,92,26,0.32), rgba(17,16,14,0.06));
+        }}
         @media (max-width: 980px) {{
             .hero {{
                 grid-template-columns: 1fr;
             }}
             .editorial-rail {{
-                border-left: none;
-                border-top: 1px solid rgba(15,14,13,0.12);
                 padding-left: 0;
                 padding-top: 18px;
             }}
@@ -1104,9 +1288,20 @@ def inject_css() -> None:
                 grid-template-columns: repeat(2, minmax(0, 1fr));
             }}
             .block-container {{
-                margin: 0;
-                border: none;
-                box-shadow: none;
+                margin: 10px 10px 36px 10px;
+                padding: 22px 18px 36px 18px;
+                border-radius: 26px;
+            }}
+        }}
+        @media (max-width: 640px) {{
+            .stat-strip {{
+                grid-template-columns: 1fr;
+            }}
+            .hero h1 {{
+                font-size: clamp(46px, 16vw, 72px);
+            }}
+            .editorial-visual {{
+                min-height: 260px;
             }}
         }}
         </style>
