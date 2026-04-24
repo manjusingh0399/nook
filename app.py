@@ -1,37 +1,30 @@
-# nook control room
-# run: streamlit run app.py
+# nook control room — advanced version
 
 import streamlit as st
-from datetime import date
+from datetime import datetime
+import random
 
-st.set_page_config(page_title="nook control room", layout="wide")
+st.set_page_config(page_title="nook control", layout="wide")
 
-# -------------------- STYLES --------------------
+# -------------------- STYLE --------------------
 
 st.markdown("""
 <style>
 
-/* ---------- ROOT ---------- */
-:root {
-    --orange: #E44F0A;
-    --yellow: #F0A533;
-    --red: #BA011A;
-    --blue: #0B4B8B;
-    --bg: #0E0E0E;
-    --card: #141414;
-    --text: #F4F2ED;
-}
-
 /* ---------- BASE ---------- */
 html, body, [data-testid="stApp"] {
-    background: radial-gradient(circle at top, rgba(228,79,10,0.08), #0E0E0E 60%);
-    color: var(--text);
-    font-family: system-ui;
+    background: #0B0B0B;
+    color: #EDEDED;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 /* REMOVE DEFAULT */
 #MainMenu, header, footer {visibility: hidden;}
-.block-container {padding: 2rem; max-width: 1300px;}
+.block-container {
+    max-width: 1100px;
+    margin: auto;
+    padding-top: 2rem;
+}
 
 /* ---------- SIDEBAR ---------- */
 [data-testid="stSidebar"] {
@@ -39,49 +32,59 @@ html, body, [data-testid="stApp"] {
     border-right: 1px solid rgba(255,255,255,0.05);
 }
 
-[data-testid="stSidebar"] * {
-    color: #aaa;
-}
-
-[data-testid="stRadio"] label {
-    font-size: 13px !important;
-    padding: 8px 10px !important;
-    border-radius: 8px !important;
-    transition: all 0.2s;
-}
-
-[data-testid="stRadio"] label:hover {
-    background: rgba(255,255,255,0.05);
-    color: white !important;
-}
-
-[data-testid="stRadio"] input:checked + div {
-    background: rgba(228,79,10,0.15) !important;
-    color: #E44F0A !important;
-    border: 1px solid rgba(228,79,10,0.3);
-}
-
 /* ---------- CARD ---------- */
-.nk-card {
-    background: linear-gradient(135deg, #141414, #0E0E0E);
+.card {
+    background: #121212;
     border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 16px;
+    border-radius: 14px;
     padding: 1.5rem;
     margin-bottom: 12px;
-    position: relative;
+    transition: all 0.2s ease;
 }
 
-.nk-card::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(circle at top left, rgba(228,79,10,0.15), transparent 40%);
+.card:hover {
+    border-color: rgba(255,255,255,0.12);
+}
+
+/* ---------- HERO ---------- */
+.hero {
+    background: linear-gradient(135deg, rgba(255,80,0,0.12), #121212);
+    border-radius: 14px;
+    padding: 1.8rem;
+    margin-bottom: 20px;
+}
+
+/* ---------- METRIC ---------- */
+.metric {
+    font-size: 32px;
+    font-weight: 700;
+}
+.metric-label {
+    font-size: 11px;
+    color: #777;
+}
+
+/* ---------- LIVE DOT ---------- */
+.pulse {
+    width: 8px;
+    height: 8px;
+    background: #ff3b30;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 6px;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(255,59,48,0.6); }
+    70% { box-shadow: 0 0 0 10px rgba(255,59,48,0); }
+    100% { box-shadow: 0 0 0 0 rgba(255,59,48,0); }
 }
 
 /* ---------- TEXT ---------- */
 .title {
     font-size: 26px;
-    font-weight: 700;
+    font-weight: 600;
 }
 .sub {
     font-size: 12px;
@@ -90,186 +93,138 @@ html, body, [data-testid="stApp"] {
 
 /* ---------- BUTTON ---------- */
 .stButton button {
-    background: linear-gradient(135deg, #E44F0A, #BA011A);
+    background: #1F1F1F;
     border-radius: 10px;
-    border: none;
-    color: white;
-    font-weight: 600;
+    border: 1px solid rgba(255,255,255,0.1);
 }
 .stButton button:hover {
-    transform: scale(1.03);
-    box-shadow: 0 0 15px rgba(228,79,10,0.4);
-}
-
-/* ---------- STAT ---------- */
-.stat {
-    font-size: 28px;
-    font-weight: 700;
-}
-.stat-label {
-    font-size: 10px;
-    color: #777;
+    border-color: #FF5A00;
 }
 
 </style>
 """, unsafe_allow_html=True)
 
-# -------------------- STATE --------------------
+# -------------------- DATA --------------------
 
 if "members" not in st.session_state:
     st.session_state.members = [
-        {"name": "Ishita", "tag": "quiet energy", "sessions": 2},
-        {"name": "Kabir", "tag": "expressive", "sessions": 4},
-        {"name": "Dev", "tag": "open to new", "sessions": 1},
+        {"name": "Ishita", "tag": "quiet"},
+        {"name": "Kabir", "tag": "expressive"},
+        {"name": "Dev", "tag": "open"},
     ]
 
 if "evenings" not in st.session_state:
     st.session_state.evenings = [
         {"name": "canvas night", "vibe": "mixed"},
-        {"name": "lake walk", "vibe": "introvert"}
+        {"name": "lake walk", "vibe": "quiet"}
     ]
 
-if "reflections" not in st.session_state:
-    st.session_state.reflections = []
+# -------------------- SIGNAL ENGINE --------------------
 
-# -------------------- HELPERS --------------------
-
-def section(title, sub):
-    st.markdown(f"<div class='title'>{title}</div>", unsafe_allow_html=True)
-    st.markdown(f"<div class='sub'>{sub}</div><br>", unsafe_allow_html=True)
-
-def card(content):
-    st.markdown(f"<div class='nk-card'>{content}</div>", unsafe_allow_html=True)
+def get_signal():
+    signals = [
+        "quiet energy dominant",
+        "social energy rising",
+        "mixed balance stable",
+        "low activity detected"
+    ]
+    return random.choice(signals)
 
 # -------------------- SIDEBAR --------------------
 
 with st.sidebar:
-    st.markdown("""
-    <div style="font-size:22px;font-weight:700;">nook</div>
-    <div style="font-size:10px;color:#777;margin-bottom:20px;">
-        control system
+    st.markdown("### nook")
+    st.markdown("<div class='sub'>control system</div>", unsafe_allow_html=True)
+
+    page = st.radio("", [
+        "control",
+        "people",
+        "evenings",
+        "insights"
+    ], label_visibility="collapsed")
+
+# -------------------- CONTROL ROOM --------------------
+
+def control():
+    st.markdown("<div class='title'>control room</div>", unsafe_allow_html=True)
+    st.markdown("<div class='sub'>live system state</div><br>", unsafe_allow_html=True)
+
+    # HERO SIGNAL
+    st.markdown(f"""
+    <div class='hero'>
+        <span class="pulse"></span>
+        <span style="font-size:18px;font-weight:600;">
+            {get_signal()}
+        </span>
+        <div style="font-size:13px;color:#aaa;margin-top:6px;">
+            system adapting in real time
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown("""
-    <div style="font-size:10px;color:#E44F0A;margin-bottom:10px;">
-        founder mode
-    </div>
-    """, unsafe_allow_html=True)
-
-    page = st.radio(
-        "",
-        ["control room", "inside", "evenings", "reflections", "insights"],
-        label_visibility="collapsed"
-    )
-
-# -------------------- PAGES --------------------
-
-def control_room():
-    section("control room", "system overview")
-
-    card("""
-    <div style='font-size:20px;font-weight:700'>
-        signal: quiet energy dominant
-    </div>
-    <div style='font-size:13px;color:#aaa'>
-        recommendation: slower, low-pressure evenings
-    </div>
-    """)
-
+    # METRICS
     cols = st.columns(3)
 
-    stats = [
+    metrics = [
         ("people", len(st.session_state.members)),
         ("evenings", len(st.session_state.evenings)),
-        ("reflections", len(st.session_state.reflections))
+        ("status", "active")
     ]
 
-    for i, (label, val) in enumerate(stats):
+    for i, (label, val) in enumerate(metrics):
         with cols[i]:
-            st.markdown(f"<div class='stat'>{val}</div>", unsafe_allow_html=True)
-            st.markdown(f"<div class='stat-label'>{label}</div>", unsafe_allow_html=True)
+            st.markdown(f"""
+            <div class='card'>
+                <div class='metric'>{val}</div>
+                <div class='metric-label'>{label}</div>
+            </div>
+            """, unsafe_allow_html=True)
 
-def inside():
-    section("inside", "active members")
+# -------------------- PEOPLE --------------------
 
-    grouped = {}
+def people():
+    st.markdown("<div class='title'>people</div><br>", unsafe_allow_html=True)
 
     for m in st.session_state.members:
-        grouped.setdefault(m["tag"], []).append(m)
+        st.markdown(f"""
+        <div class='card'>
+            <b>{m['name']}</b><br>
+            <span style='color:#777'>{m['tag']}</span>
+        </div>
+        """, unsafe_allow_html=True)
 
-    for tag, people in grouped.items():
-        st.markdown(f"### {tag}")
-        for m in people:
-            card(f"<b>{m['name']}</b><br>sessions: {m['sessions']}")
+# -------------------- EVENINGS --------------------
 
 def evenings():
-    section("evenings", "experience design")
+    st.markdown("<div class='title'>evenings</div><br>", unsafe_allow_html=True)
 
-    for ev in st.session_state.evenings:
-        card(f"""
-        <div style='font-size:18px;font-weight:700'>{ev['name']}</div>
-        <div style='color:#aaa'>vibe: {ev['vibe']}</div>
-        """)
+    for e in st.session_state.evenings:
+        st.markdown(f"""
+        <div class='card'>
+            <b>{e['name']}</b><br>
+            <span style='color:#777'>{e['vibe']}</span>
+        </div>
+        """, unsafe_allow_html=True)
 
-    st.markdown("---")
-
-    st.subheader("create new")
-
-    name = st.text_input("name")
-    vibe = st.selectbox("vibe", ["introvert", "social", "mixed"])
-
-    if st.button("add"):
-        st.session_state.evenings.append({"name": name, "vibe": vibe})
-        st.rerun()
-
-def reflections():
-    section("reflections", "what stayed after")
-
-    with st.form("form"):
-        member = st.selectbox("member", [m["name"] for m in st.session_state.members])
-        evening = st.selectbox("evening", [e["name"] for e in st.session_state.evenings])
-        feeling = st.selectbox("feeling", ["seen", "warm", "awkward", "surface", "deep"])
-        note = st.text_area("note")
-
-        if st.form_submit_button("save"):
-            st.session_state.reflections.append({
-                "member": member,
-                "evening": evening,
-                "feeling": feeling,
-                "note": note,
-                "date": str(date.today())
-            })
-            st.rerun()
-
-    for r in st.session_state.reflections[::-1]:
-        card(f"""
-        <b>{r['member']}</b> · {r['evening']}<br>
-        {r['feeling']}<br>
-        <span style='color:#888'>{r['note']}</span>
-        """)
+# -------------------- INSIGHTS --------------------
 
 def insights():
-    section("insights", "system learning")
+    st.markdown("<div class='title'>insights</div><br>", unsafe_allow_html=True)
 
-    if not st.session_state.reflections:
-        card("no data yet")
-        return
-
-    card(f"""
-    total reflections: {len(st.session_state.reflections)}<br>
-    insight: smaller groups → better engagement
-    """)
+    st.markdown("""
+    <div class='card'>
+        system trend: quieter groups show higher retention<br>
+        recommendation: reduce group size
+    </div>
+    """, unsafe_allow_html=True)
 
 # -------------------- ROUTING --------------------
 
-if page == "control room":
-    control_room()
-elif page == "inside":
-    inside()
+if page == "control":
+    control()
+elif page == "people":
+    people()
 elif page == "evenings":
     evenings()
-elif page == "reflections":
-    reflections()
 elif page == "insights":
     insights()
