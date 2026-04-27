@@ -1,286 +1,129 @@
-# app.py
 import streamlit as st
+import pandas as pd
+from datetime import date
 
-# ---------------- PAGE CONFIG ----------------
-st.set_page_config(
-    page_title="Design Class Landing",
-    page_icon="🎨",
-    layout="wide",
-)
+st.set_page_config(page_title='Nook Web App V1', layout='wide')
 
-# ---------------- CUSTOM CSS ----------------
-st.markdown("""
+# ---------- STYLE ----------
+st.markdown('''
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
-
-html, body, [class*="css"] {
-    font-family: 'Inter', sans-serif;
-}
-
-.stApp {
-    background: #6e6e6e;
-}
-
-.main-box {
-    background: #2f2f2f;
-    border-radius: 28px;
-    padding: 28px 45px;
-    margin-top: 20px;
-    color: white;
-}
-
-.topnav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid rgba(255,255,255,0.2);
-    padding-bottom: 18px;
-    margin-bottom: 35px;
-}
-
-.nav-left, .nav-right {
-    display: flex;
-    gap: 28px;
-    align-items: center;
-}
-
-.logo {
-    font-size: 28px;
-    font-weight: 900;
-}
-
-.nav-item {
-    color: #ddd;
-    font-size: 14px;
-}
-
-.btn-outline {
-    border: 1px solid white;
-    padding: 8px 18px;
-    border-radius: 50px;
-    font-size: 13px;
-}
-
-.hero {
-    text-align: center;
-    margin-top: 25px;
-}
-
-.hero h1 {
-    font-size: 74px;
-    line-height: 0.92;
-    font-weight: 900;
-    margin-bottom: 20px;
-}
-
-.orange {
-    color: #ff5a00;
-}
-
-.sub-small {
-    text-align: left;
-    font-size: 14px;
-    color: #ddd;
-    line-height: 1.5;
-    margin-top: 20px;
-}
-
-.join-btn {
-    display: inline-block;
-    border: 1px solid white;
-    border-radius: 50px;
-    padding: 10px 22px;
-    margin-top: 20px;
-}
-
-.image-card {
-    background: #f2f2f2;
-    border-radius: 28px;
-    padding: 10px;
-    text-align: center;
-    height: 250px;
-}
-
-.image-card img {
-    width: 100%;
-    border-radius: 20px;
-    object-fit: cover;
-    height: 230px;
-}
-
-.class-box {
-    border: 1px solid rgba(255,255,255,0.35);
-    border-radius: 28px;
-    padding: 35px;
-    margin-top: 60px;
-}
-
-.section-title {
-    font-size: 34px;
-    font-weight: 700;
-}
-
-.class-card {
-    border-radius: 24px;
-    padding: 22px;
-    height: 290px;
-}
-
-.white-card {
-    background: #ececec;
-    color: black;
-}
-
-.orange-card {
-    background: #ff5a00;
-    color: white;
-}
-
-.class-card h3 {
-    font-size: 28px;
-    margin-bottom: 10px;
-}
-
-.quote {
-    text-align: center;
-    font-size: 44px;
-    font-weight: 900;
-    margin-top: 30px;
-    line-height: 1.0;
-}
-
-.footer {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 30px;
-    color: #aaa;
-    font-size: 12px;
-}
+.stApp {background:#f5f5f5;}
+.hero{background:#ff5a00;padding:28px;border-radius:18px;color:white;margin-bottom:18px;}
+.card{background:white;padding:18px;border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.08);margin-bottom:14px;}
+.metric{font-size:34px;font-weight:800;color:#111;}
+.small{color:#666;font-size:13px;}
+.tag{display:inline-block;padding:4px 10px;border-radius:20px;background:#111;color:#fff;font-size:12px;margin-right:6px;}
+button[kind='primary']{background:#ff5a00 !important;border:none !important;}
 </style>
-""", unsafe_allow_html=True)
+''', unsafe_allow_html=True)
 
-# ---------------- MAIN CONTAINER ----------------
-st.markdown('<div class="main-box">', unsafe_allow_html=True)
+# ---------- DATA ----------
+if 'users' not in st.session_state:
+    st.session_state.users = {
+        'founder@nook.com': {'name':'Manju Singh','role':'founder','tier':'YHTBT','password':'admin123','referrals':3},
+        'user@nook.com': {'name':'Kabir','role':'member','tier':'First Out','password':'user123','referrals':3},
+    }
+if 'events' not in st.session_state:
+    st.session_state.events = [
+        {'name':'Canvas Night','tier':'First Out','date':'2026-05-10','price':499},
+        {'name':'Dinner Stories','tier':'In Between Plans','date':'2026-05-14','price':899},
+        {'name':'Farmhouse Social','tier':'Worth It','date':'2026-05-22','price':2499},
+    ]
+if 'applications' not in st.session_state:
+    st.session_state.applications = []
+if 'bookings' not in st.session_state:
+    st.session_state.bookings = []
+if 'logged_in' not in st.session_state:
+    st.session_state.logged_in = False
 
-# NAVBAR
-st.markdown("""
-<div class="topnav">
-    <div class="nav-left">
-        <div class="logo">◈</div>
-        <div class="nav-item">Home</div>
-        <div class="nav-item">Store</div>
-        <div class="nav-item">About Us</div>
-    </div>
+# ---------- HELPERS ----------
+def logout():
+    st.session_state.logged_in=False
+    st.rerun()
 
-    <div class="nav-right">
-        <div class="nav-item">Class</div>
-        <div class="btn-outline">Contact Us ↗</div>
-    </div>
-</div>
-""", unsafe_allow_html=True)
+def login(email,pw):
+    u=st.session_state.users.get(email)
+    if u and u['password']==pw:
+        st.session_state.logged_in=True
+        st.session_state.email=email
+        st.rerun()
 
-# HERO
-st.markdown("""
-<div class="hero">
-    <h1><span class="orange">#</span>LEVEL UP YOUR<br>DESIGN WITH OUR<br>DESIGN CLASS</h1>
-</div>
-""", unsafe_allow_html=True)
+# ---------- LOGIN ----------
+if not st.session_state.logged_in:
+    st.markdown("<div class='hero'><h1>NOOK</h1><h3>Your Third Place</h3><p>More than just going out.</p></div>", unsafe_allow_html=True)
+    c1,c2=st.columns(2)
+    with c1:
+        st.subheader('Login')
+        email=st.text_input('Email', value='founder@nook.com')
+        pw=st.text_input('Password', type='password', value='admin123')
+        if st.button('Enter Nook'):
+            login(email,pw)
+    with c2:
+        st.subheader('Join Waitlist')
+        n=st.text_input('Name')
+        e=st.text_input('Your Email')
+        vibe=st.selectbox('What are you seeking?', ['New people','Meaningful evenings','Fun plans','Something different'])
+        if st.button('Apply to Nook'):
+            st.session_state.applications.append({'name':n,'email':e,'vibe':vibe,'status':'Pending'})
+            st.success('Applied successfully.')
+    st.stop()
 
-col1, col2 = st.columns([1,1])
+# ---------- APP ----------
+user=st.session_state.users[st.session_state.email]
+st.sidebar.image('https://dummyimage.com/220x60/ff5a00/ffffff&text=NOOK')
+st.sidebar.write(user['name'])
+st.sidebar.caption(user['role'])
+page = st.sidebar.radio('Navigate', ['Dashboard','Experiences','Referrals','Founder Panel'] if user['role']=='founder' else ['Dashboard','Experiences','Referrals'])
+if st.sidebar.button('Logout'): logout()
 
-with col1:
-    st.markdown("""
-    <div class="sub-small">
-    With more than<br>
-    2K+ Members<br>
-    500+ Tutorials
-    </div>
-    """, unsafe_allow_html=True)
+# ---------- DASHBOARD ----------
+if page=='Dashboard':
+    st.markdown("<div class='hero'><h1>Welcome to Nook</h1><p>Your social life, upgraded.</p></div>", unsafe_allow_html=True)
+    c1,c2,c3=st.columns(3)
+    with c1:
+        st.markdown("<div class='card'><div class='small'>Your Tier</div><div class='metric'>%s</div></div>"%user['tier'], unsafe_allow_html=True)
+    with c2:
+        st.markdown("<div class='card'><div class='small'>Referrals Left</div><div class='metric'>%s</div></div>"%user['referrals'], unsafe_allow_html=True)
+    with c3:
+        st.markdown("<div class='card'><div class='small'>Upcoming Events</div><div class='metric'>%s</div></div>"%len(st.session_state.events), unsafe_allow_html=True)
 
-with col2:
-    st.markdown("""
-    <div style='text-align:right'>
-    <div class="join-btn">Join Us ↗</div>
-    </div>
-    """, unsafe_allow_html=True)
+# ---------- EXPERIENCES ----------
+if page=='Experiences':
+    st.title('Upcoming Experiences')
+    for i,e in enumerate(st.session_state.events):
+        st.markdown(f"<div class='card'><h3>{e['name']}</h3><span class='tag'>{e['tier']}</span><p>{e['date']} · ₹{e['price']}</p></div>", unsafe_allow_html=True)
+        if st.button(f"Book {e['name']}", key=i):
+            st.session_state.bookings.append({'user':user['name'],'event':e['name']})
+            st.success('Booked!')
 
-# IMAGE SECTION
-st.markdown("<br>", unsafe_allow_html=True)
-c1, c2, c3 = st.columns(3)
+# ---------- REFERRALS ----------
+if page=='Referrals':
+    st.title('Invite Friends')
+    st.markdown(f"<div class='card'><h3>Your Code: NOOK{user['name'][:3].upper()}</h3><p>{user['referrals']} invites left</p></div>", unsafe_allow_html=True)
+    friend=st.text_input('Friend email')
+    if st.button('Send Invite'):
+        st.success('Invite sent.')
 
-with c1:
-    st.markdown("""
-    <div class="image-card">
-    <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3">
-    </div>
-    """, unsafe_allow_html=True)
+# ---------- FOUNDER PANEL ----------
+if page=='Founder Panel' and user['role']=='founder':
+    st.title('Founder Control Room')
+    c1,c2,c3=st.columns(3)
+    c1.metric('Members', len(st.session_state.users))
+    c2.metric('Applications', len(st.session_state.applications))
+    c3.metric('Bookings', len(st.session_state.bookings))
 
-with c2:
-    st.markdown("""
-    <div class="image-card">
-    <img src="https://images.unsplash.com/photo-1497366754035-f200968a6e72">
-    </div>
-    """, unsafe_allow_html=True)
+    st.subheader('Applications')
+    if st.session_state.applications:
+        df=pd.DataFrame(st.session_state.applications)
+        st.dataframe(df, use_container_width=True)
+    else:
+        st.info('No applications yet.')
 
-with c3:
-    st.markdown("""
-    <div class="image-card">
-    <img src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4">
-    </div>
-    """, unsafe_allow_html=True)
-
-# CLASS SECTION
-st.markdown("""
-<div class="class-box">
-<div style="display:flex;justify-content:space-between;align-items:center;">
-<div class="section-title">Our Classes</div>
-<div style="max-width:420px;color:#ccc;font-size:16px;">
-Here is our types of design classes that will accompany you in learning graphic design
-</div>
-</div>
-</div>
-""", unsafe_allow_html=True)
-
-c1, c2, c3 = st.columns(3)
-
-with c1:
-    st.markdown("""
-    <div class="class-card white-card">
-        <h3>Beginner<br>Class</h3>
-        <p>For those of you who are just learning design.</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-with c2:
-    st.markdown("""
-    <div class="class-card orange-card">
-        <h3>Expert<br>Class</h3>
-        <p>For those of you who want to upgrade your skills.</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-with c3:
-    st.markdown("""
-    <div class="class-card white-card">
-        <h3>Employee<br>Class</h3>
-        <p>For those of you who are busy but still want to learn.</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-# QUOTE
-st.markdown("""
-<div class="quote">
-KEEP <span class="orange">CREATING</span> UNTIL YOU<br>
-FIND YOUR OWN <span class="orange">AUDIENCE</span>
-</div>
-""", unsafe_allow_html=True)
-
-# FOOTER
-st.markdown("""
-<div class="footer">
-<div>Copyright RE Production</div>
-<div>Ruang Edit 2024</div>
-</div>
-""", unsafe_allow_html=True)
-
-st.markdown("</div>", unsafe_allow_html=True)
+    st.subheader('Create Event')
+    n=st.text_input('Event Name')
+    tier=st.selectbox('Tier',['First Out','In Between Plans','Worth It','YHTBT'])
+    d=st.date_input('Date', value=date.today())
+    p=st.number_input('Price', value=499)
+    if st.button('Create Experience'):
+        st.session_state.events.append({'name':n,'tier':tier,'date':str(d),'price':p})
+        st.success('Experience created.')
