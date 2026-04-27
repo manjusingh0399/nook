@@ -2,103 +2,70 @@ import streamlit as st
 import pandas as pd
 from datetime import date
 
-st.set_page_config(page_title='NOOK Editorial V4', layout='wide', initial_sidebar_state='collapsed')
+st.set_page_config(page_title='NOOK V5', layout='wide', initial_sidebar_state='expanded')
 
-# ---------- DATA ----------
+# data
 if 'members' not in st.session_state:
     st.session_state.members = pd.DataFrame([
-        ['Kabir Anand','Approved','First Out'],['Ishita Rao','Approved','Worth It'],['Dev Sharma','Waitlist','IBP']
+        ['Kabir','Approved','First Out'],['Ishita','Approved','Worth It'],['Dev','Waitlist','IBP'],['Naina','Approved','YHTTB']
     ], columns=['Name','Status','Tier'])
-
 if 'events' not in st.session_state:
     st.session_state.events = pd.DataFrame([
-        ['Canvas Night','Saturday','MP Nagar'],['Rooftop Chai','Thursday','Arera']
+        ['Canvas Night','Sat','MP Nagar'],['Rooftop Chai','Thu','Arera']
     ], columns=['Experience','Day','Location'])
 
-# ---------- STYLE ----------
-st.markdown('''
-<style>
-@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;700&family=Inter:wght@400;600;800&display=swap");
-html,body,[class*='css']{background:#0b0a09;color:#f3eee6;font-family:Inter,sans-serif}
-.block-container{padding:0;max-width:100%}
-section[data-testid='stSidebar']{background:#0b0a09;border-right:1px solid rgba(255,255,255,.06)}
-.hero{padding:6rem 8rem;background:linear-gradient(90deg,rgba(60,10,5,.9),rgba(20,10,8,.7));min-height:88vh;display:flex;align-items:center}
-.hero h1{font-family:'Cormorant Garamond',serif;font-size:5.5rem;line-height:.92;margin:0;font-weight:700}
-.hero p{font-size:1.15rem;color:#d7cec3;max-width:620px;line-height:1.8}
-.btn{display:inline-block;padding:.9rem 1.4rem;border-radius:999px;background:#d8c4aa;color:#111;text-decoration:none;font-weight:700}
-.section{padding:5rem 8rem}
-.cream{background:#ece6da;color:#231c18}.cream p{color:#4c433d}
-.wine{background:#5c1f17}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:center}
-.title{font-family:'Cormorant Garamond',serif;font-size:3.2rem;line-height:1}
-.small{letter-spacing:.22em;text-transform:uppercase;font-size:.72rem;opacity:.7}
-.card{padding:2rem;border:1px solid rgba(255,255,255,.08);border-radius:24px;background:rgba(255,255,255,.03)}
-table{color:inherit}
-</style>
-''', unsafe_allow_html=True)
+st.markdown('''<style>
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap");
+html,body,[class*=css]{background:#2f312f;color:#fff;font-family:Inter,sans-serif}
+section[data-testid='stSidebar']{background:#262826;border-right:1px solid rgba(255,255,255,.08)}
+.block-container{max-width:1400px;padding-top:1rem;padding-bottom:3rem}
+.hero,.title{font-weight:800;letter-spacing:-0.04em}.hero{font-size:5rem;line-height:.9}.title{font-size:2rem}
+.shell{background:#353734;border-radius:28px;padding:1.2rem}.panel{background:#3a3c39;border:1px solid rgba(255,255,255,.08);border-radius:24px;padding:1.2rem;height:100%}
+.orange{color:#ff6a00}.btn{background:#ff6a00;color:#fff;padding:.6rem 1rem;border-radius:999px}.muted{color:#c8c8c8}.metric{font-size:3rem;font-weight:800}.small{font-size:.75rem;letter-spacing:.2em;text-transform:uppercase;color:#d0d0d0}
+div[data-testid='stDataFrame']{border-radius:18px;overflow:hidden}
+.stButton>button{border-radius:999px;background:#ff6a00;color:#fff;border:none}
+</style>''', unsafe_allow_html=True)
 
-mode = st.sidebar.radio('Mode',['Public Website','Founder Portal'])
+mode=st.sidebar.radio('Mode',['Website','Founder Portal'])
+st.sidebar.caption('NOOK / PRIVATE SOCIAL CLUB')
 
-# ---------- PUBLIC WEBSITE ----------
-if mode == 'Public Website':
-    st.markdown("""
-    <section class='hero'>
-      <div>
-        <div class='small'>NOOK / PRIVATE SOCIAL CLUB</div>
-        <h1>BUILD THE SOCIAL LIFE YOU'VE BEEN WANTING</h1>
-        <p>Curated gatherings, meaningful rooms, and elevated weekends for people who want more than random plans.</p>
-        <br><a class='btn'>Apply For Access</a>
-      </div>
-    </section>
-    <section class='section cream'>
-      <div class='grid2'>
-        <div>
-          <div class='title'>Build a richer social life in 30 days — without burnout.</div>
-          <p>Small intentional circles. Better people. Better energy. Better stories.</p>
-        </div>
-        <div>
-          <div class='card'>Private dinners<br><br>Creative nights<br><br>Curated walks<br><br>Members only rooms</div>
-        </div>
-      </div>
-    </section>
-    <section class='section wine'>
-      <div class='grid2'>
-        <div class='card'>[ editorial image space ]</div>
-        <div>
-          <div class='title'>Meet Nook</div>
-          <p>Nook exists for people tired of shallow plans, passive weekends, and low-quality social circles.</p>
-          <a class='btn'>Why We Built This</a>
-        </div>
-      </div>
-    </section>
-    <section class='section cream'>
-      <div class='small'>Featured In Spirit</div>
-      <div class='title'>Vogue • Monocle • Forbes • Culture</div>
-    </section>
-    """, unsafe_allow_html=True)
-
-    st.markdown("<div class='section'><div class='title'>Upcoming Experiences</div></div>", unsafe_allow_html=True)
-    st.dataframe(st.session_state.events, use_container_width=True)
-
-# ---------- FOUNDER PORTAL ----------
+if mode=='Website':
+    st.markdown("<div class='shell'>", unsafe_allow_html=True)
+    st.markdown("<div class='small'>Home · Experiences · About · Apply</div>", unsafe_allow_html=True)
+    c1,c2=st.columns([1.6,1])
+    with c1:
+        st.markdown("<div style='padding:2rem 1rem'><div class='hero'><span class='orange'>LEVEL UP</span> YOUR SOCIAL LIFE WITH NOOK</div><br><div class='muted'>Curated experiences, ambitious people, better weekends.</div></div>", unsafe_allow_html=True)
+    with c2:
+        st.markdown("<div class='panel'><div class='title'>Join Us</div><p class='muted'>Invite-only community built quietly in Bhopal.</p></div>", unsafe_allow_html=True)
+    c1,c2,c3=st.columns(3)
+    for col,t in zip([c1,c2,c3],['Dinner Nights','Creative Gatherings','Social Walks']):
+        with col: st.markdown(f"<div class='panel'><div class='title'>{t}</div><p class='muted'>Thoughtful people. Better rooms.</p></div>", unsafe_allow_html=True)
+    st.markdown('<br>', unsafe_allow_html=True)
+    st.markdown("<div class='panel'><div class='title'>Our Membership Tiers</div></div>", unsafe_allow_html=True)
+    c1,c2,c3=st.columns(3)
+    tiers=['First Out','Worth It','YHTTB']
+    for col,t in zip([c1,c2,c3],tiers):
+        with col: st.markdown(f"<div class='panel'><div class='title'>{t}</div><p class='muted'>Access level for different social energies.</p></div>", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 else:
-    st.title('Founder Portal')
-    page = st.radio('Navigate',['Members','Waitlist','Events','Settings'], horizontal=True)
-    if page == 'Members':
-        st.dataframe(st.session_state.members, use_container_width=True)
-    elif page == 'Waitlist':
-        st.dataframe(st.session_state.members[st.session_state.members['Status']=='Waitlist'], use_container_width=True)
-    elif page == 'Events':
-        st.dataframe(st.session_state.events, use_container_width=True)
-        with st.form('new_event'):
-            a,b,c = st.columns(3)
-            ex = a.text_input('Experience')
-            dy = b.text_input('Day')
-            lo = c.text_input('Location')
-            if st.form_submit_button('Add Experience'):
-                st.session_state.events.loc[len(st.session_state.events)] = [ex,dy,lo]
-                st.success('Added')
-    else:
-        st.text_input('Admin Email')
-        st.toggle('Invite Only', True)
-        st.button('Save')
+    page=st.sidebar.radio('Navigate',['Dashboard','Members','Waitlist','Events','Insights','Settings'])
+    st.markdown("<div class='shell'>", unsafe_allow_html=True)
+    if page=='Dashboard':
+        st.markdown("<div class='hero'>CONTROL ROOM</div>", unsafe_allow_html=True)
+        c1,c2,c3,c4=st.columns(4)
+        vals=[('128','Members'),('₹42K','Revenue'),('03','Events'),('87%','Retention')]
+        for col,(v,l) in zip([c1,c2,c3,c4],vals):
+            with col: st.markdown(f"<div class='panel'><div class='metric'>{v}</div><div class='small'>{l}</div></div>", unsafe_allow_html=True)
+    elif page=='Members': st.dataframe(st.session_state.members,use_container_width=True)
+    elif page=='Waitlist': st.dataframe(st.session_state.members[st.session_state.members.Status=='Waitlist'],use_container_width=True)
+    elif page=='Events':
+        st.dataframe(st.session_state.events,use_container_width=True)
+        with st.form('ev'):
+            a,b,c=st.columns(3)
+            x=a.text_input('Experience'); y=b.text_input('Day'); z=c.text_input('Location')
+            if st.form_submit_button('Add'): st.session_state.events.loc[len(st.session_state.events)]=[x,y,z]
+    elif page=='Insights':
+        st.line_chart(pd.DataFrame({'Revenue':[10,18,26,42,51]}))
+    elif page=='Settings':
+        st.text_input('Admin Email'); st.toggle('Invite Only',True); st.button('Save')
+    st.markdown("</div>", unsafe_allow_html=True)
