@@ -1,71 +1,286 @@
+# app.py
 import streamlit as st
-import pandas as pd
-from datetime import date
 
-st.set_page_config(page_title='NOOK V5', layout='wide', initial_sidebar_state='expanded')
+# ---------------- PAGE CONFIG ----------------
+st.set_page_config(
+    page_title="Design Class Landing",
+    page_icon="🎨",
+    layout="wide",
+)
 
-# data
-if 'members' not in st.session_state:
-    st.session_state.members = pd.DataFrame([
-        ['Kabir','Approved','First Out'],['Ishita','Approved','Worth It'],['Dev','Waitlist','IBP'],['Naina','Approved','YHTTB']
-    ], columns=['Name','Status','Tier'])
-if 'events' not in st.session_state:
-    st.session_state.events = pd.DataFrame([
-        ['Canvas Night','Sat','MP Nagar'],['Rooftop Chai','Thu','Arera']
-    ], columns=['Experience','Day','Location'])
+# ---------------- CUSTOM CSS ----------------
+st.markdown("""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
 
-st.markdown('''<style>
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap");
-html,body,[class*=css]{background:#2f312f;color:#fff;font-family:Inter,sans-serif}
-section[data-testid='stSidebar']{background:#262826;border-right:1px solid rgba(255,255,255,.08)}
-.block-container{max-width:1400px;padding-top:1rem;padding-bottom:3rem}
-.hero,.title{font-weight:800;letter-spacing:-0.04em}.hero{font-size:5rem;line-height:.9}.title{font-size:2rem}
-.shell{background:#353734;border-radius:28px;padding:1.2rem}.panel{background:#3a3c39;border:1px solid rgba(255,255,255,.08);border-radius:24px;padding:1.2rem;height:100%}
-.orange{color:#ff6a00}.btn{background:#ff6a00;color:#fff;padding:.6rem 1rem;border-radius:999px}.muted{color:#c8c8c8}.metric{font-size:3rem;font-weight:800}.small{font-size:.75rem;letter-spacing:.2em;text-transform:uppercase;color:#d0d0d0}
-div[data-testid='stDataFrame']{border-radius:18px;overflow:hidden}
-.stButton>button{border-radius:999px;background:#ff6a00;color:#fff;border:none}
-</style>''', unsafe_allow_html=True)
+html, body, [class*="css"] {
+    font-family: 'Inter', sans-serif;
+}
 
-mode=st.sidebar.radio('Mode',['Website','Founder Portal'])
-st.sidebar.caption('NOOK / PRIVATE SOCIAL CLUB')
+.stApp {
+    background: #6e6e6e;
+}
 
-if mode=='Website':
-    st.markdown("<div class='shell'>", unsafe_allow_html=True)
-    st.markdown("<div class='small'>Home · Experiences · About · Apply</div>", unsafe_allow_html=True)
-    c1,c2=st.columns([1.6,1])
-    with c1:
-        st.markdown("<div style='padding:2rem 1rem'><div class='hero'><span class='orange'>LEVEL UP</span> YOUR SOCIAL LIFE WITH NOOK</div><br><div class='muted'>Curated experiences, ambitious people, better weekends.</div></div>", unsafe_allow_html=True)
-    with c2:
-        st.markdown("<div class='panel'><div class='title'>Join Us</div><p class='muted'>Invite-only community built quietly in Bhopal.</p></div>", unsafe_allow_html=True)
-    c1,c2,c3=st.columns(3)
-    for col,t in zip([c1,c2,c3],['Dinner Nights','Creative Gatherings','Social Walks']):
-        with col: st.markdown(f"<div class='panel'><div class='title'>{t}</div><p class='muted'>Thoughtful people. Better rooms.</p></div>", unsafe_allow_html=True)
-    st.markdown('<br>', unsafe_allow_html=True)
-    st.markdown("<div class='panel'><div class='title'>Our Membership Tiers</div></div>", unsafe_allow_html=True)
-    c1,c2,c3=st.columns(3)
-    tiers=['First Out','Worth It','YHTTB']
-    for col,t in zip([c1,c2,c3],tiers):
-        with col: st.markdown(f"<div class='panel'><div class='title'>{t}</div><p class='muted'>Access level for different social energies.</p></div>", unsafe_allow_html=True)
-    st.markdown("</div>", unsafe_allow_html=True)
-else:
-    page=st.sidebar.radio('Navigate',['Dashboard','Members','Waitlist','Events','Insights','Settings'])
-    st.markdown("<div class='shell'>", unsafe_allow_html=True)
-    if page=='Dashboard':
-        st.markdown("<div class='hero'>CONTROL ROOM</div>", unsafe_allow_html=True)
-        c1,c2,c3,c4=st.columns(4)
-        vals=[('128','Members'),('₹42K','Revenue'),('03','Events'),('87%','Retention')]
-        for col,(v,l) in zip([c1,c2,c3,c4],vals):
-            with col: st.markdown(f"<div class='panel'><div class='metric'>{v}</div><div class='small'>{l}</div></div>", unsafe_allow_html=True)
-    elif page=='Members': st.dataframe(st.session_state.members,use_container_width=True)
-    elif page=='Waitlist': st.dataframe(st.session_state.members[st.session_state.members.Status=='Waitlist'],use_container_width=True)
-    elif page=='Events':
-        st.dataframe(st.session_state.events,use_container_width=True)
-        with st.form('ev'):
-            a,b,c=st.columns(3)
-            x=a.text_input('Experience'); y=b.text_input('Day'); z=c.text_input('Location')
-            if st.form_submit_button('Add'): st.session_state.events.loc[len(st.session_state.events)]=[x,y,z]
-    elif page=='Insights':
-        st.line_chart(pd.DataFrame({'Revenue':[10,18,26,42,51]}))
-    elif page=='Settings':
-        st.text_input('Admin Email'); st.toggle('Invite Only',True); st.button('Save')
-    st.markdown("</div>", unsafe_allow_html=True)
+.main-box {
+    background: #2f2f2f;
+    border-radius: 28px;
+    padding: 28px 45px;
+    margin-top: 20px;
+    color: white;
+}
+
+.topnav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+    padding-bottom: 18px;
+    margin-bottom: 35px;
+}
+
+.nav-left, .nav-right {
+    display: flex;
+    gap: 28px;
+    align-items: center;
+}
+
+.logo {
+    font-size: 28px;
+    font-weight: 900;
+}
+
+.nav-item {
+    color: #ddd;
+    font-size: 14px;
+}
+
+.btn-outline {
+    border: 1px solid white;
+    padding: 8px 18px;
+    border-radius: 50px;
+    font-size: 13px;
+}
+
+.hero {
+    text-align: center;
+    margin-top: 25px;
+}
+
+.hero h1 {
+    font-size: 74px;
+    line-height: 0.92;
+    font-weight: 900;
+    margin-bottom: 20px;
+}
+
+.orange {
+    color: #ff5a00;
+}
+
+.sub-small {
+    text-align: left;
+    font-size: 14px;
+    color: #ddd;
+    line-height: 1.5;
+    margin-top: 20px;
+}
+
+.join-btn {
+    display: inline-block;
+    border: 1px solid white;
+    border-radius: 50px;
+    padding: 10px 22px;
+    margin-top: 20px;
+}
+
+.image-card {
+    background: #f2f2f2;
+    border-radius: 28px;
+    padding: 10px;
+    text-align: center;
+    height: 250px;
+}
+
+.image-card img {
+    width: 100%;
+    border-radius: 20px;
+    object-fit: cover;
+    height: 230px;
+}
+
+.class-box {
+    border: 1px solid rgba(255,255,255,0.35);
+    border-radius: 28px;
+    padding: 35px;
+    margin-top: 60px;
+}
+
+.section-title {
+    font-size: 34px;
+    font-weight: 700;
+}
+
+.class-card {
+    border-radius: 24px;
+    padding: 22px;
+    height: 290px;
+}
+
+.white-card {
+    background: #ececec;
+    color: black;
+}
+
+.orange-card {
+    background: #ff5a00;
+    color: white;
+}
+
+.class-card h3 {
+    font-size: 28px;
+    margin-bottom: 10px;
+}
+
+.quote {
+    text-align: center;
+    font-size: 44px;
+    font-weight: 900;
+    margin-top: 30px;
+    line-height: 1.0;
+}
+
+.footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 30px;
+    color: #aaa;
+    font-size: 12px;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# ---------------- MAIN CONTAINER ----------------
+st.markdown('<div class="main-box">', unsafe_allow_html=True)
+
+# NAVBAR
+st.markdown("""
+<div class="topnav">
+    <div class="nav-left">
+        <div class="logo">◈</div>
+        <div class="nav-item">Home</div>
+        <div class="nav-item">Store</div>
+        <div class="nav-item">About Us</div>
+    </div>
+
+    <div class="nav-right">
+        <div class="nav-item">Class</div>
+        <div class="btn-outline">Contact Us ↗</div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+# HERO
+st.markdown("""
+<div class="hero">
+    <h1><span class="orange">#</span>LEVEL UP YOUR<br>DESIGN WITH OUR<br>DESIGN CLASS</h1>
+</div>
+""", unsafe_allow_html=True)
+
+col1, col2 = st.columns([1,1])
+
+with col1:
+    st.markdown("""
+    <div class="sub-small">
+    With more than<br>
+    2K+ Members<br>
+    500+ Tutorials
+    </div>
+    """, unsafe_allow_html=True)
+
+with col2:
+    st.markdown("""
+    <div style='text-align:right'>
+    <div class="join-btn">Join Us ↗</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+# IMAGE SECTION
+st.markdown("<br>", unsafe_allow_html=True)
+c1, c2, c3 = st.columns(3)
+
+with c1:
+    st.markdown("""
+    <div class="image-card">
+    <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3">
+    </div>
+    """, unsafe_allow_html=True)
+
+with c2:
+    st.markdown("""
+    <div class="image-card">
+    <img src="https://images.unsplash.com/photo-1497366754035-f200968a6e72">
+    </div>
+    """, unsafe_allow_html=True)
+
+with c3:
+    st.markdown("""
+    <div class="image-card">
+    <img src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4">
+    </div>
+    """, unsafe_allow_html=True)
+
+# CLASS SECTION
+st.markdown("""
+<div class="class-box">
+<div style="display:flex;justify-content:space-between;align-items:center;">
+<div class="section-title">Our Classes</div>
+<div style="max-width:420px;color:#ccc;font-size:16px;">
+Here is our types of design classes that will accompany you in learning graphic design
+</div>
+</div>
+</div>
+""", unsafe_allow_html=True)
+
+c1, c2, c3 = st.columns(3)
+
+with c1:
+    st.markdown("""
+    <div class="class-card white-card">
+        <h3>Beginner<br>Class</h3>
+        <p>For those of you who are just learning design.</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+with c2:
+    st.markdown("""
+    <div class="class-card orange-card">
+        <h3>Expert<br>Class</h3>
+        <p>For those of you who want to upgrade your skills.</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+with c3:
+    st.markdown("""
+    <div class="class-card white-card">
+        <h3>Employee<br>Class</h3>
+        <p>For those of you who are busy but still want to learn.</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+# QUOTE
+st.markdown("""
+<div class="quote">
+KEEP <span class="orange">CREATING</span> UNTIL YOU<br>
+FIND YOUR OWN <span class="orange">AUDIENCE</span>
+</div>
+""", unsafe_allow_html=True)
+
+# FOOTER
+st.markdown("""
+<div class="footer">
+<div>Copyright RE Production</div>
+<div>Ruang Edit 2024</div>
+</div>
+""", unsafe_allow_html=True)
+
+st.markdown("</div>", unsafe_allow_html=True)
