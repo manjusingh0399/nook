@@ -1,5 +1,6 @@
 import json
 from datetime import date, datetime
+from pathlib import Path
 
 import pandas as pd
 import streamlit as st
@@ -7,7 +8,7 @@ import streamlit as st
 
 st.set_page_config(
     page_title="nook control room",
-    page_icon="●",
+    page_icon="N",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -43,6 +44,8 @@ TIER_RANK = {
     "worth it": 3,
     "you had to be there": 4,
 }
+
+DATA_PATH = Path(__file__).with_name("nook_data.json")
 
 
 def inject_css():
@@ -247,12 +250,293 @@ def inject_css():
             background: #fffdf5 !important;
         }}
 
+        html, body, [data-testid="stAppViewContainer"] {{
+            background:
+                radial-gradient(circle at 84% 8%, rgba(255,172,0,0.24), transparent 18rem),
+                radial-gradient(circle at 14% 14%, rgba(242,92,5,0.12), transparent 20rem),
+                linear-gradient(180deg, #fff8e7 0%, var(--cream) 540px) !important;
+        }}
+
+        .block-container {{
+            padding-top: 1rem;
+            padding-bottom: 3rem;
+        }}
+
+        .nook-title {{
+            position: relative;
+            overflow: hidden;
+            border-radius: 34px;
+            border: 2px solid var(--black);
+            border-left: 0;
+            background:
+                linear-gradient(90deg, var(--black) 0 16px, transparent 16px),
+                linear-gradient(135deg, #fffaf0 0%, #fff4d8 52%, #ffe1b5 100%);
+            box-shadow: 0 12px 0 rgba(0,0,0,0.07);
+            min-height: 142px;
+        }}
+
+        .nook-title::after {{
+            content: "";
+            position: absolute;
+            right: -58px;
+            top: -62px;
+            width: 210px;
+            height: 210px;
+            border: 28px solid rgba(242,92,5,0.24);
+            border-radius: 50%;
+        }}
+
+        .title-row {{
+            position: relative;
+            z-index: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 1rem;
+        }}
+
+        .title-chips {{
+            display: flex;
+            gap: 0.45rem;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            min-width: 180px;
+        }}
+
+        .title-chip {{
+            display: inline-block;
+            width: 44px;
+            height: 18px;
+            border: 2px solid var(--black);
+            border-radius: 999px;
+        }}
+
+        .title-chip.gold {{ background: var(--gold); }}
+        .title-chip.orange {{ background: var(--orange); }}
+        .title-chip.deep {{ background: var(--deep-orange); }}
+        .title-chip.black {{ background: var(--black); }}
+
+        .metric-grid {{
+            gap: 1rem;
+        }}
+
+        .metric-card {{
+            position: relative;
+            overflow: hidden;
+            border: 2px solid rgba(0,0,0,0.16);
+            border-radius: 30px;
+            box-shadow: 0 8px 0 rgba(0,0,0,0.05);
+        }}
+
+        .metric-card::after {{
+            content: "";
+            position: absolute;
+            right: -18px;
+            bottom: -22px;
+            width: 74px;
+            height: 74px;
+            border: 14px solid rgba(0,0,0,0.08);
+            border-radius: 50%;
+        }}
+
+        .metric-card.feature {{
+            border-color: var(--black);
+            box-shadow: 8px 8px 0 rgba(0,0,0,0.12);
+        }}
+
+        .metric-card.deep .metric-label,
+        .metric-card.deep .metric-value {{
+            color: var(--cream);
+        }}
+
+        .metric-card.dark {{
+            box-shadow: 8px 8px 0 rgba(242,135,5,0.28);
+        }}
+
+        .panel {{
+            border-radius: 30px;
+            border: 1px solid rgba(0,0,0,0.12);
+            box-shadow: 0 10px 28px rgba(0,0,0,0.045);
+        }}
+
+        .panel.black-accent {{
+            border-left: 12px solid var(--black);
+        }}
+
+        .fun-strip {{
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }}
+
+        .fun-card {{
+            min-height: 94px;
+            border: 2px solid var(--black);
+            border-radius: 26px;
+            padding: 0.9rem;
+            background: var(--paper);
+            position: relative;
+            overflow: hidden;
+        }}
+
+        .fun-card strong {{
+            display: block;
+            font-size: 1.02rem;
+            line-height: 1;
+        }}
+
+        .fun-card span {{
+            color: var(--muted);
+            font-size: 0.84rem;
+        }}
+
+        .fun-card.orange {{ background: var(--orange); }}
+        .fun-card.gold {{ background: var(--gold); }}
+        .fun-card.soft {{ background: var(--soft); }}
+        .fun-card.black {{ background: var(--black); color: var(--cream); }}
+        .fun-card.black span {{ color: rgba(242,240,228,0.68); }}
+
+        .list-row {{
+            border-radius: 22px;
+            background: #fff8e7;
+            transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+        }}
+
+        .list-row:hover {{
+            transform: translateY(-1px);
+            background: #ffefc9;
+            border-color: rgba(0,0,0,0.2);
+        }}
+
+        .badge {{
+            border-width: 1.5px;
+            padding: 0.28rem 0.62rem;
+        }}
+
+        [data-testid="stSidebar"] {{
+            background:
+                linear-gradient(180deg, #fffaf0 0%, #fff3d6 100%);
+            border-right: 2px solid var(--black);
+        }}
+
+        .sidebar-brand {{
+            border: 2px solid var(--black);
+            border-radius: 28px;
+            padding: 1rem;
+            background: var(--orange);
+            box-shadow: 6px 6px 0 rgba(0,0,0,0.12);
+            margin-bottom: 0.8rem;
+        }}
+
+        .sidebar-brand h2 {{
+            margin: 0;
+            line-height: 0.9;
+            font-size: 2rem;
+        }}
+
+        .sidebar-brand p {{
+            margin: 0.25rem 0 0;
+            font-family: "Syne Mono", monospace;
+            font-size: 0.68rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }}
+
+        .sidebar-account {{
+            border: 1px solid rgba(0,0,0,0.14);
+            border-radius: 22px;
+            padding: 0.85rem;
+            background: var(--paper);
+            margin-top: 1rem;
+        }}
+
+        div[role="radiogroup"] label {{
+            border-radius: 999px;
+            padding: 0.2rem 0.5rem;
+            margin-bottom: 0.15rem;
+        }}
+
+        div[role="radiogroup"] label:hover {{
+            background: rgba(242,135,5,0.16);
+        }}
+
+        [data-testid="stVerticalBlockBorderWrapper"] {{
+            border-radius: 30px !important;
+            border-color: rgba(0,0,0,0.15) !important;
+            background: rgba(255,250,240,0.58);
+            box-shadow: 0 10px 28px rgba(0,0,0,0.045);
+        }}
+
+        .login-card {{
+            position: relative;
+            overflow: hidden;
+            border: 2px solid var(--black);
+            border-radius: 34px;
+            padding: 1.4rem;
+            background: linear-gradient(145deg, #fffaf0 0%, #ffe7bd 100%);
+            box-shadow: 10px 10px 0 rgba(0,0,0,0.12);
+            margin-bottom: 1rem;
+        }}
+
+        .login-card::after {{
+            content: "";
+            position: absolute;
+            right: -42px;
+            top: -42px;
+            width: 150px;
+            height: 150px;
+            background: var(--orange);
+            border: 2px solid var(--black);
+            border-radius: 50%;
+        }}
+
+        .login-card > * {{
+            position: relative;
+            z-index: 1;
+        }}
+
+        .login-logo {{
+            display: inline-grid;
+            place-items: center;
+            width: 78px;
+            height: 78px;
+            border: 2px solid var(--black);
+            border-radius: 50%;
+            background: var(--black);
+            color: var(--cream);
+            font-weight: 800;
+        }}
+
+        .experience-note {{
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 0.75rem;
+            margin: 0.75rem 0;
+        }}
+
+        .act-note {{
+            border-radius: 20px;
+            padding: 0.85rem;
+            background: var(--soft);
+            border: 1px solid rgba(0,0,0,0.12);
+            min-height: 110px;
+        }}
+
+        .act-note strong {{
+            display: block;
+            margin-bottom: 0.3rem;
+        }}
+
         @media (max-width: 980px) {{
             .metric-grid {{
                 grid-template-columns: repeat(2, minmax(0, 1fr));
             }}
             .metric-card.feature {{
                 grid-column: span 2;
+            }}
+            .fun-strip, .experience-note {{
+                grid-template-columns: 1fr 1fr;
             }}
         }}
 
@@ -262,6 +546,16 @@ def inject_css():
             }}
             .metric-card.feature {{
                 grid-column: auto;
+            }}
+            .fun-strip, .experience-note {{
+                grid-template-columns: 1fr;
+            }}
+            .title-row {{
+                display: block;
+            }}
+            .title-chips {{
+                justify-content: flex-start;
+                margin-top: 0.85rem;
             }}
         }}
         </style>
@@ -395,13 +689,41 @@ def seed_data():
     }
 
 
+def load_data():
+    if not DATA_PATH.exists():
+        return seed_data()
+    try:
+        with DATA_PATH.open("r", encoding="utf-8") as file:
+            data = json.load(file)
+        base = seed_data()
+        for key, value in base.items():
+            data.setdefault(key, value)
+        return data
+    except (json.JSONDecodeError, OSError):
+        return seed_data()
+
+
+def save_data():
+    with DATA_PATH.open("w", encoding="utf-8") as file:
+        json.dump(st.session_state.data, file, indent=2, ensure_ascii=False)
+
+
+def replace_data(data):
+    st.session_state.data = data
+    save_data()
+
+
+def new_id(prefix, records):
+    return f"{prefix}{len(records) + 1}"
+
+
 def referral_code(name, phone):
     return f"{name[:3].upper()}{phone[-3:]}"
 
 
 def init_state():
     if "data" not in st.session_state:
-        st.session_state.data = seed_data()
+        st.session_state.data = load_data()
     if "user" not in st.session_state:
         st.session_state.user = None
 
@@ -423,10 +745,13 @@ def login_page():
     with middle:
         st.markdown(
             """
-            <div class="panel black-accent">
-                <span class="badge orange">nook</span>
-                <h1 style="margin-top:.8rem">sign in</h1>
-                <p style="color:#5E5146">access the control room.</p>
+            <div class="login-card">
+                <div class="login-logo">nook</div>
+                <h1 style="margin-top:1rem">sign in</h1>
+                <p style="color:#5E5146; max-width: 24rem">step into the control room for people, evenings, and the little details that make the room work.</p>
+                <span class="badge orange">founder</span>
+                <span class="badge gold">facilitators</span>
+                <span class="badge black">members</span>
             </div>
             """,
             unsafe_allow_html=True,
@@ -441,15 +766,26 @@ def login_page():
                 st.session_state.user = user
                 st.rerun()
             st.error("invalid login details.")
-        st.caption("founder login: manju / founder2026")
+        with st.expander("test login"):
+            st.code("manju / founder2026")
 
 
 def title(kicker, title_text):
     st.markdown(
         f"""
         <div class="nook-title">
-            <p>{kicker}</p>
-            <h1>{title_text}</h1>
+            <div class="title-row">
+                <div>
+                    <p>{kicker}</p>
+                    <h1>{title_text}</h1>
+                </div>
+                <div class="title-chips">
+                    <span class="title-chip gold"></span>
+                    <span class="title-chip orange"></span>
+                    <span class="title-chip deep"></span>
+                    <span class="title-chip black"></span>
+                </div>
+            </div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -500,6 +836,94 @@ def auto_tag(comfort, intent):
     return "open to new"
 
 
+def tier_from_referral(code):
+    if not code:
+        return "first out", None
+    referrer = next((m for m in st.session_state.data["members"] if m["referral_code"].lower() == code.lower()), None)
+    if not referrer:
+        return "first out", None
+    if referrer["tier"] == "first out":
+        return "in between plans", referrer["id"]
+    if referrer["tier"] == "in between plans":
+        return "worth it", referrer["id"]
+    return "you had to be there", referrer["id"]
+
+
+def create_member(name, email, phone, intent, comfort, newsletter, status="pending", referral=""):
+    tier, referrer_id = tier_from_referral(referral)
+    member = {
+        "id": new_id("m", st.session_state.data["members"]),
+        "name": name.strip() or "new member",
+        "email": email.strip().lower(),
+        "phone": phone.strip(),
+        "budget": "",
+        "availability": "",
+        "activities": "",
+        "intent": intent.strip(),
+        "newsletter": newsletter,
+        "sessions": 0,
+        "tier": tier,
+        "presence_tag": auto_tag(int(comfort), intent),
+        "comfort_level": int(comfort),
+        "referral_code": referral_code(name.strip() or "new member", phone.strip() or "000"),
+        "referred_by": referrer_id,
+        "referrals_used": 0,
+        "joined": date.today().isoformat(),
+        "status": status,
+        "ready_for_invite": False,
+        "notes": "",
+        "fac_flag": False,
+    }
+    st.session_state.data["members"].append(member)
+    if referrer_id:
+        referrer = get_member(referrer_id)
+        if referrer:
+            referrer["referrals_used"] = min(3, int(referrer.get("referrals_used", 0)) + 1)
+    save_data()
+    return member
+
+
+def sync_sheet_url(url):
+    df = pd.read_csv(url)
+    inserted = 0
+    updated = 0
+    existing_by_email = {m["email"].lower(): m for m in st.session_state.data["members"]}
+    for _, row in df.fillna("").iterrows():
+        name = str(row.get("name", row.get("Name", ""))).strip()
+        email = str(row.get("email", row.get("Email", ""))).strip().lower()
+        if not name or not email:
+            continue
+        phone = str(row.get("phone", row.get("Phone", ""))).strip()
+        intent = str(row.get("intent", row.get("message", row.get("Message", "")))).strip()
+        newsletter = str(row.get("newsletter", row.get("Newsletter", "no"))).strip().lower()
+        referral = str(row.get("referral_code", row.get("Referral Code", ""))).strip()
+        if email in existing_by_email:
+            member = existing_by_email[email]
+            member.update(
+                {
+                    "name": name,
+                    "phone": phone or member.get("phone", ""),
+                    "intent": intent or member.get("intent", ""),
+                    "newsletter": "yes" if newsletter in ["yes", "y", "true", "1"] else "no",
+                }
+            )
+            updated += 1
+        else:
+            create_member(
+                name=name,
+                email=email,
+                phone=phone,
+                intent=intent or "signed up from intake form",
+                comfort=3,
+                newsletter="yes" if newsletter in ["yes", "y", "true", "1"] else "no",
+                referral=referral,
+            )
+            inserted += 1
+    st.session_state.data["config"]["last_sync"] = datetime.now().strftime("%d/%m/%Y, %H:%M")
+    save_data()
+    return inserted, updated
+
+
 def match_score(member, evening):
     score = 50
     tag = member["presence_tag"]
@@ -531,6 +955,17 @@ def dashboard():
     newsletter_mrr = len([m for m in approved if m["newsletter"] == "yes"]) * 99
 
     title("workspace", "dashboard")
+    st.markdown(
+        f"""
+        <div class="fun-strip">
+            <div class="fun-card orange"><strong>{len(incoming)} people waiting</strong><span>review the incoming list</span></div>
+            <div class="fun-card gold"><strong>{len([m for m in approved if m["ready_for_invite"]])} ready</strong><span>invite-friendly members</span></div>
+            <div class="fun-card soft"><strong>{len([f for f in data["facilitators"] if f["status"] != "stepped away"])} holding</strong><span>active space holders</span></div>
+            <div class="fun-card black"><strong>{len(data["suggestions"])} suggestions</strong><span>from the community portal</span></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     st.markdown(
         f"""
         <div class="metric-grid">
@@ -570,7 +1005,7 @@ def dashboard():
         st.markdown('<div class="panel"><h3>recent arrivals</h3>', unsafe_allow_html=True)
         for member in data["members"][-8:][::-1]:
             st.markdown(
-                f'<div class="list-row"><strong>{member["name"]}</strong><span>{member["status"]} · {member["presence_tag"]}</span></div>',
+                f'<div class="list-row"><strong>{member["name"]}</strong><span>{member["status"]}  -  {member["presence_tag"]}</span></div>',
                 unsafe_allow_html=True,
             )
         st.markdown("</div>", unsafe_allow_html=True)
@@ -578,7 +1013,7 @@ def dashboard():
         st.markdown('<div class="panel"><h3>upcoming experiences</h3>', unsafe_allow_html=True)
         for evening in data["experiences"][:4]:
             st.markdown(
-                f'<div class="list-row"><strong>{evening["name"]}</strong><span>{evening["date"]} · {evening["venue"]}</span></div>',
+                f'<div class="list-row"><strong>{evening["name"]}</strong><span>{evening["date"]}  -  {evening["venue"]}</span></div>',
                 unsafe_allow_html=True,
             )
         st.markdown("</div>", unsafe_allow_html=True)
@@ -587,6 +1022,21 @@ def dashboard():
 def incoming_page():
     title("members", "incoming")
     members = [m for m in st.session_state.data["members"] if m["status"] in ["pending", "waitlist", "declined"]]
+    with st.expander("add applicant", expanded=False):
+        with st.form("add_applicant"):
+            c1, c2 = st.columns(2)
+            name = c1.text_input("name")
+            email = c2.text_input("email")
+            phone = c1.text_input("phone")
+            comfort = c2.slider("comfort level", 1, 5, 3)
+            newsletter = c1.selectbox("newsletter", ["no", "yes"])
+            referral = c2.text_input("referral code")
+            intent = st.text_area("intent")
+            if st.form_submit_button("add to incoming"):
+                create_member(name, email, phone, intent or "new applicant", comfort, newsletter, referral=referral)
+                st.success("applicant added.")
+                st.rerun()
+
     query = st.text_input("search", placeholder="search name or presence tag")
     if query:
         members = [m for m in members if query.lower() in f'{m["name"]} {m["presence_tag"]}'.lower()]
@@ -603,17 +1053,32 @@ def incoming_page():
         c1, c2, c3, c4 = st.columns(4)
         if c1.button("approve"):
             member["status"] = "approved"
+            save_data()
             st.rerun()
         if c2.button("decline"):
             member["status"] = "declined"
+            save_data()
             st.rerun()
         if c3.button("hold"):
             member["status"] = "waitlist"
+            save_data()
             st.rerun()
         if c4.button("flag space holder"):
             member["fac_flag"] = True
+            save_data()
             st.rerun()
-        member["notes"] = st.text_area("admin notes", member.get("notes", ""))
+        with st.form("incoming_detail"):
+            member["tier"] = st.selectbox("tier", list(TIER_RANK), index=list(TIER_RANK).index(member["tier"]))
+            member["comfort_level"] = st.slider("comfort", 1, 5, int(member["comfort_level"]))
+            member["presence_tag"] = st.selectbox(
+                "presence tag",
+                ["quiet energy", "open to new", "observing", "expressive", "needs easing"],
+                index=["quiet energy", "open to new", "observing", "expressive", "needs easing"].index(member["presence_tag"]),
+            )
+            member["notes"] = st.text_area("admin notes", member.get("notes", ""))
+            if st.form_submit_button("save member"):
+                save_data()
+                st.success("member saved.")
 
 
 def inside_page():
@@ -631,8 +1096,15 @@ def inside_page():
     if members:
         selected = st.selectbox("edit ready status", [m["name"] for m in members])
         member = next(m for m in members if m["name"] == selected)
-        member["ready_for_invite"] = st.toggle("ready for next invite", member["ready_for_invite"])
-        member["notes"] = st.text_area("member note", member.get("notes", ""))
+        with st.form("inside_member"):
+            member["ready_for_invite"] = st.checkbox("ready for next invite", member["ready_for_invite"])
+            member["tier"] = st.selectbox("tier", list(TIER_RANK), index=list(TIER_RANK).index(member["tier"]))
+            member["sessions"] = st.number_input("sessions attended", min_value=0, value=int(member["sessions"]))
+            member["newsletter"] = st.selectbox("newsletter", ["no", "yes"], index=["no", "yes"].index(member["newsletter"]))
+            member["notes"] = st.text_area("member note", member.get("notes", ""))
+            if st.form_submit_button("save member"):
+                save_data()
+                st.success("member saved.")
 
 
 def builder_page():
@@ -679,6 +1151,7 @@ def builder_page():
                 "no_show": [],
             }
         )
+        save_data()
         st.success("evening saved.")
 
 
@@ -688,17 +1161,37 @@ def evenings_page():
         fac = get_facilitator(evening["facilitator"])
         with st.container(border=True):
             st.subheader(evening["name"])
-            st.caption(f'{evening["date"]} · {evening["time"]} · {evening["venue"]} · {evening["vibe"]}')
+            st.caption(f'{evening["date"]}  -  {evening["time"]}  -  {evening["venue"]}  -  {evening["vibe"]}')
+            if st.session_state.user["role"] == "founder":
+                fac_lookup = {f["name"]: f["id"] for f in st.session_state.data["facilitators"]}
+                fac_names = list(fac_lookup)
+                current_fac_name = next((name for name, fid in fac_lookup.items() if fid == evening["facilitator"]), fac_names[0])
+                new_fac_name = st.selectbox(
+                    "space holder",
+                    fac_names,
+                    index=fac_names.index(current_fac_name),
+                    key=f'fac-{evening["id"]}',
+                )
+                if fac_lookup[new_fac_name] != evening["facilitator"]:
+                    evening["facilitator"] = fac_lookup[new_fac_name]
+                    save_data()
+                    st.rerun()
             st.markdown(
                 f'{badge(evening["tier"], "orange")} {badge(str(len(evening["invited"])) + " invited")} '
                 f'{badge(str(len(evening["confirmed"])) + " confirmed", "gold")} {badge(money(evening["price"]), "black")}',
                 unsafe_allow_html=True,
             )
-            c1, c2, c3 = st.columns(3)
-            c1.markdown(f"**act 1**  \n{evening['act1']}")
-            c2.markdown(f"**act 2**  \n{evening['act2']}")
-            c3.markdown(f"**act 3**  \n{evening['act3']}")
-            st.caption(f"space holder: {fac['name'] if fac else 'unassigned'} · capacity {evening['capacity']}")
+            st.markdown(
+                f"""
+                <div class="experience-note">
+                    <div class="act-note"><strong>act 1</strong>{evening["act1"]}</div>
+                    <div class="act-note"><strong>act 2</strong>{evening["act2"]}</div>
+                    <div class="act-note"><strong>act 3</strong>{evening["act3"]}</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            st.caption(f"space holder: {fac['name'] if fac else 'unassigned'}  -  capacity {evening['capacity']}")
 
             suggestions = [
                 (m, match_score(m, evening))
@@ -709,10 +1202,29 @@ def evenings_page():
             st.markdown("**smart matches**")
             for member, score in suggestions:
                 cols = st.columns([3, 1])
-                cols[0].write(f'{member["name"]} · {member["presence_tag"]} · {score}/100')
+                cols[0].write(f'{member["name"]}  -  {member["presence_tag"]}  -  {score}/100')
                 if cols[1].button("invite", key=f'invite-{evening["id"]}-{member["id"]}'):
                     evening["invited"].append(member["id"])
+                    save_data()
                     st.rerun()
+            invited_members = [get_member(mid) for mid in evening["invited"] if get_member(mid)]
+            if invited_members:
+                with st.expander("attendance"):
+                    for member in invited_members:
+                        cols = st.columns([3, 1, 1])
+                        cols[0].write(member["name"])
+                        if cols[1].button("confirm", key=f'confirm-{evening["id"]}-{member["id"]}'):
+                            if member["id"] not in evening["confirmed"]:
+                                evening["confirmed"].append(member["id"])
+                                member["sessions"] = int(member.get("sessions", 0)) + 1
+                                member["tier"] = "in between plans" if member["sessions"] >= 4 else member["tier"]
+                            save_data()
+                            st.rerun()
+                        if cols[2].button("no-show", key=f'noshow-{evening["id"]}-{member["id"]}'):
+                            if member["id"] not in evening["no_show"]:
+                                evening["no_show"].append(member["id"])
+                            save_data()
+                            st.rerun()
 
 
 def space_holders_page():
@@ -721,8 +1233,56 @@ def space_holders_page():
     if flagged:
         st.markdown('<div class="panel black-accent"><h3>flagged candidates</h3>', unsafe_allow_html=True)
         for member in flagged:
-            st.write(f'{member["name"]} · {member["presence_tag"]} · {member["sessions"]} sessions')
+            cols = st.columns([3, 1])
+            cols[0].write(f'{member["name"]}  -  {member["presence_tag"]}  -  {member["sessions"]} sessions')
+            if cols[1].button("onboard", key=f'onboard-{member["id"]}'):
+                st.session_state.data["facilitators"].append(
+                    {
+                        "id": new_id("f", st.session_state.data["facilitators"]),
+                        "uid": f'{member["name"].split()[0].lower()}.fac',
+                        "pass": "change123",
+                        "name": member["name"],
+                        "style": "calm",
+                        "status": "holding",
+                        "access": "first out",
+                        "sessions_run": 0,
+                        "refs": 2,
+                        "notes": "onboarded from flagged member",
+                    }
+                )
+                member["fac_flag"] = False
+                save_data()
+                st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
+
+    with st.expander("add space holder"):
+        with st.form("add_facilitator"):
+            c1, c2 = st.columns(2)
+            name = c1.text_input("name")
+            uid = c2.text_input("login id")
+            password = c1.text_input("temporary password", type="password")
+            style = c2.selectbox("style", ["calm", "energetic"])
+            access = c1.selectbox("tier access", list(TIER_RANK))
+            refs = c2.number_input("referral slots", min_value=0, value=2)
+            notes = st.text_area("notes")
+            if st.form_submit_button("create facilitator"):
+                st.session_state.data["facilitators"].append(
+                    {
+                        "id": new_id("f", st.session_state.data["facilitators"]),
+                        "uid": uid,
+                        "pass": password,
+                        "name": name,
+                        "style": style,
+                        "status": "holding",
+                        "access": access,
+                        "sessions_run": 0,
+                        "refs": int(refs),
+                        "notes": notes,
+                    }
+                )
+                save_data()
+                st.success("facilitator created.")
+                st.rerun()
 
     cols = st.columns(2)
     for i, fac in enumerate(st.session_state.data["facilitators"]):
@@ -732,11 +1292,29 @@ def space_holders_page():
                 <div class="panel">
                     <h3>{fac["name"]}</h3>
                     {badge(fac["status"], "black")} {badge(fac["style"], "orange")}
-                    <p>{fac["sessions_run"]} sessions run · {fac["access"]} access · {fac["refs"]} referral slots</p>
+                    <p>{fac["sessions_run"]} sessions run  -  {fac["access"]} access  -  {fac["refs"]} referral slots</p>
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
+            with st.expander(f"manage {fac['name']}"):
+                with st.form(f"fac-{fac['id']}"):
+                    fac["status"] = st.selectbox("status", ["holding", "noticing", "stepped away"], index=["holding", "noticing", "stepped away"].index(fac["status"]))
+                    fac["style"] = st.selectbox("style", ["calm", "energetic"], index=["calm", "energetic"].index(fac["style"]))
+                    fac["access"] = st.selectbox("access", list(TIER_RANK), index=list(TIER_RANK).index(fac["access"]))
+                    fac["sessions_run"] = st.number_input("sessions run", min_value=0, value=int(fac["sessions_run"]))
+                    fac["refs"] = st.number_input("referral slots", min_value=0, value=int(fac["refs"]))
+                    fac["notes"] = st.text_area("notes", fac.get("notes", ""))
+                    c1, c2 = st.columns(2)
+                    save = c1.form_submit_button("save")
+                    offboard = c2.form_submit_button("offboard")
+                    if save:
+                        save_data()
+                        st.success("facilitator saved.")
+                    if offboard:
+                        fac["status"] = "stepped away"
+                        save_data()
+                        st.rerun()
 
 
 def conduct_page():
@@ -796,6 +1374,14 @@ def leave_page():
         notes = st.text_area("notes")
         if st.form_submit_button("save leave"):
             st.session_state.data["leaves"].append({"fid": fac_lookup[name], "from": start.isoformat(), "to": end.isoformat(), "reason": reason, "notes": notes})
+            save_data()
+            st.rerun()
+    if st.session_state.user["role"] == "founder" and st.session_state.data["leaves"]:
+        remove_idx = st.selectbox("remove leave record", ["none", *[f'{i + 1}. {leave["reason"]} ({leave["from"]})' for i, leave in enumerate(st.session_state.data["leaves"])]])
+        if remove_idx != "none" and st.button("remove selected leave"):
+            index = int(remove_idx.split(".", 1)[0]) - 1
+            st.session_state.data["leaves"].pop(index)
+            save_data()
             st.rerun()
 
 
@@ -828,6 +1414,7 @@ def messages_page():
                         "read": False,
                     }
                 )
+                save_data()
                 st.rerun()
     with c2:
         for message in inbox[::-1]:
@@ -835,7 +1422,7 @@ def messages_page():
                 f"""
                 <div class="list-row">
                     <strong>{message["subject"] or "message"}</strong>
-                    <span>{message["type"]} · {message["ts"]}</span>
+                    <span>{message["type"]}  -  {message["ts"]}</span>
                     <p>{message["body"]}</p>
                 </div>
                 """,
@@ -875,6 +1462,14 @@ def payments_page():
         unsafe_allow_html=True,
     )
     st.dataframe(pd.DataFrame(payments), use_container_width=True, hide_index=True)
+    pending = [p for p in payments if p["status"] == "pending"]
+    if pending:
+        selected = st.selectbox("mark payment paid", [f'{p["id"]}  -  {p["member"]}  -  {money(p["amount"])}' for p in pending])
+        if st.button("mark selected as paid"):
+            payment_id = selected.split("  -  ", 1)[0]
+            next(p for p in payments if p["id"] == payment_id)["status"] = "paid"
+            save_data()
+            st.rerun()
     with st.form("payment"):
         member = st.text_input("member")
         evening = st.text_input("evening")
@@ -883,6 +1478,7 @@ def payments_page():
         status = st.selectbox("status", ["paid", "pending"])
         if st.form_submit_button("add payment"):
             payments.append({"id": f"p{len(payments) + 1}", "member": member, "evening": evening, "amount": int(amount), "method": method, "status": status, "date": date.today().isoformat()})
+            save_data()
             st.rerun()
 
 
@@ -916,10 +1512,26 @@ def insights_page():
 def settings_page():
     title("founder", "settings")
     data = st.session_state.data
-    data["config"]["sheet_url"] = st.text_input("google sheet csv url", data["config"].get("sheet_url", ""))
-    if st.button("sync now"):
-        data["config"]["last_sync"] = datetime.now().strftime("%d/%m/%Y, %H:%M")
-        st.success("sync timestamp saved.")
+    with st.form("sheet_settings"):
+        sheet_url = st.text_input("google sheet csv url", data["config"].get("sheet_url", ""))
+        c1, c2 = st.columns(2)
+        save_url = c1.form_submit_button("save url")
+        sync_now = c2.form_submit_button("sync now")
+        if save_url:
+            data["config"]["sheet_url"] = sheet_url
+            save_data()
+            st.success("sheet url saved.")
+        if sync_now:
+            data["config"]["sheet_url"] = sheet_url
+            if not sheet_url:
+                st.warning("add a published csv url first.")
+            else:
+                try:
+                    inserted, updated = sync_sheet_url(sheet_url)
+                    st.success(f"sync complete: {inserted} new, {updated} updated.")
+                except Exception as exc:
+                    st.error(f"sync failed: {exc}")
+    st.caption(f"last sync: {data['config'].get('last_sync') or 'never'}")
 
     st.download_button(
         "export json",
@@ -931,14 +1543,15 @@ def settings_page():
     imported = st.text_area("import json")
     if st.button("import data") and imported:
         try:
-            st.session_state.data = json.loads(imported)
+            replace_data(json.loads(imported))
             st.success("data imported.")
             st.rerun()
         except json.JSONDecodeError:
             st.error("invalid json.")
 
-    if st.button("reset demo data"):
-        st.session_state.data = seed_data()
+    confirm = st.text_input("type reset to reset demo data")
+    if st.button("reset demo data") and confirm == "reset":
+        replace_data(seed_data())
         st.rerun()
 
 
@@ -961,11 +1574,30 @@ def community_page():
     for evening in st.session_state.data["experiences"]:
         if eligible(member, evening):
             cols = st.columns([4, 1])
-            cols[0].write(f'{evening["name"]} · {evening["date"]} · {money(evening["price"])}')
+            cols[0].write(f'{evening["name"]}  -  {evening["date"]}  -  {money(evening["price"])}')
             if cols[1].button("sign up", key=f'community-{evening["id"]}'):
                 if member["id"] not in evening["confirmed"]:
                     evening["confirmed"].append(member["id"])
+                    save_data()
                 st.success("signed up.")
+    with st.form("community_suggestion"):
+        st.subheader("suggest an interest")
+        name = st.text_input("name")
+        suggestion_type = st.selectbox("type", ["activity", "cafe", "walk", "other"])
+        description = st.text_area("description")
+        if st.form_submit_button("send suggestion"):
+            st.session_state.data["suggestions"].append(
+                {
+                    "id": new_id("s", st.session_state.data["suggestions"]),
+                    "member": member["id"],
+                    "name": name,
+                    "type": suggestion_type,
+                    "description": description,
+                    "created": date.today().isoformat(),
+                }
+            )
+            save_data()
+            st.success("suggestion saved.")
 
 
 PAGES = {
@@ -990,15 +1622,29 @@ PAGES = {
 def sidebar():
     user = st.session_state.user
     with st.sidebar:
-        st.markdown("## nook")
-        st.caption("control room")
+        st.markdown(
+            """
+            <div class="sidebar-brand">
+                <h2>nook</h2>
+                <p>control room</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
         allowed_pages = [name for name, (_, roles) in PAGES.items() if user["role"] in roles]
         if user["role"] != "member" and "community portal" in allowed_pages:
             allowed_pages.remove("community portal")
         page = st.radio("navigate", allowed_pages, label_visibility="collapsed")
         st.markdown("---")
-        st.write(user["name"])
-        st.caption(user["role"])
+        st.markdown(
+            f"""
+            <div class="sidebar-account">
+                <strong>{user["name"]}</strong><br>
+                <span style="color:#5E5146">{user["role"]}</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
         if st.button("log out", use_container_width=True):
             st.session_state.user = None
             st.rerun()
@@ -1018,3 +1664,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
