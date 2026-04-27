@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
 from datetime import date
 
 st.set_page_config(page_title='NOOK Control Room', layout='wide', initial_sidebar_state='expanded')
@@ -130,9 +129,7 @@ elif page == 'Events':
 elif page == 'Insights':
     st.markdown('# INSIGHTS')
     df = pd.DataFrame({'Month':['Jan','Feb','Mar','Apr','May'],'Revenue':[12000,18000,26000,42000,51000]})
-    fig = px.line(df,x='Month',y='Revenue',markers=True)
-    fig.update_layout(paper_bgcolor='#0a0a0a',plot_bgcolor='#0a0a0a',font_color='white')
-    st.plotly_chart(fig,use_container_width=True)
+    st.line_chart(df.set_index('Month'))
     st.markdown("<div class='card'><h3>INTELLIGENCE</h3><p class='soft'>Retention strongest after small-group curated nights. Premium pricing accepted when storytelling is strong.</p></div>", unsafe_allow_html=True)
 
 # ---------- PAYMENTS ----------
