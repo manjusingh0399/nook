@@ -2,160 +2,103 @@ import streamlit as st
 import pandas as pd
 from datetime import date
 
-st.set_page_config(page_title='NOOK Control Room', layout='wide', initial_sidebar_state='expanded')
+st.set_page_config(page_title='NOOK Editorial V4', layout='wide', initial_sidebar_state='collapsed')
 
-# ---------- STATE ----------
+# ---------- DATA ----------
 if 'members' not in st.session_state:
     st.session_state.members = pd.DataFrame([
-        ['Kabir Anand','Pending','First Out',2,'Weekend evenings'],
-        ['Ishita Rao','Approved','Worth It',5,'Saturday'],
-        ['Dev Sharma','Waitlist','IBP',0,'Flexible'],
-        ['Naina Gupta','Approved','YHTTB',6,'Sunday']
-    ], columns=['Name','Status','Tier','Sessions','Availability'])
+        ['Kabir Anand','Approved','First Out'],['Ishita Rao','Approved','Worth It'],['Dev Sharma','Waitlist','IBP']
+    ], columns=['Name','Status','Tier'])
 
 if 'events' not in st.session_state:
     st.session_state.events = pd.DataFrame([
-        ['Canvas Night','2026-04-30','MP Nagar',8,499,'Live'],
-        ['Rooftop Chai','2026-05-03','Arera',10,299,'Planned']
-    ], columns=['Event','Date','Venue','Seats','Price','Status'])
+        ['Canvas Night','Saturday','MP Nagar'],['Rooftop Chai','Thursday','Arera']
+    ], columns=['Experience','Day','Location'])
 
-# ---------- STYLES ----------
+# ---------- STYLE ----------
 st.markdown('''
 <style>
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap");
-html,body,[class*='css']{background:#050505;color:#f5f2ea;font-family:Inter,sans-serif}
-section[data-testid='stSidebar']{background:#050505;border-right:1px solid rgba(255,255,255,.08)}
-.block-container{max-width:1450px;padding-top:1rem;padding-bottom:3rem}
-h1,h2,h3{font-weight:800;letter-spacing:-0.03em}
-.hero{font-size:5.8rem;line-height:.9;margin:0}
-.micro{font-size:.72rem;letter-spacing:.24em;text-transform:uppercase;color:#8c8c8c}
-.section{padding:2.5rem 0;border-top:1px solid rgba(255,255,255,.07)}
-.panel{padding:2rem;border-radius:28px;background:radial-gradient(circle at top right, rgba(180,0,0,.22), transparent 30%),linear-gradient(180deg,#0c0c0c,#080808)}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-top:1.2rem}
-.stat{padding:1rem 0;border-top:1px solid rgba(255,255,255,.1)}
-.metric{font-size:3rem;font-weight:800;line-height:1}
-.label{font-size:.72rem;letter-spacing:.22em;color:#8c8c8c;text-transform:uppercase}
-.soft{color:#b0b0b0;line-height:1.7}
-.line{height:1px;background:rgba(255,255,255,.08);margin:1rem 0}
-div[data-testid='stDataFrame']{border:1px solid rgba(255,255,255,.08);border-radius:16px;overflow:hidden}
-button[kind='primary']{background:#9d0000!important;border:none!important;border-radius:999px!important}
-.stButton>button{border-radius:999px!important}
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;700&family=Inter:wght@400;600;800&display=swap");
+html,body,[class*='css']{background:#0b0a09;color:#f3eee6;font-family:Inter,sans-serif}
+.block-container{padding:0;max-width:100%}
+section[data-testid='stSidebar']{background:#0b0a09;border-right:1px solid rgba(255,255,255,.06)}
+.hero{padding:6rem 8rem;background:linear-gradient(90deg,rgba(60,10,5,.9),rgba(20,10,8,.7));min-height:88vh;display:flex;align-items:center}
+.hero h1{font-family:'Cormorant Garamond',serif;font-size:5.5rem;line-height:.92;margin:0;font-weight:700}
+.hero p{font-size:1.15rem;color:#d7cec3;max-width:620px;line-height:1.8}
+.btn{display:inline-block;padding:.9rem 1.4rem;border-radius:999px;background:#d8c4aa;color:#111;text-decoration:none;font-weight:700}
+.section{padding:5rem 8rem}
+.cream{background:#ece6da;color:#231c18}.cream p{color:#4c433d}
+.wine{background:#5c1f17}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:center}
+.title{font-family:'Cormorant Garamond',serif;font-size:3.2rem;line-height:1}
+.small{letter-spacing:.22em;text-transform:uppercase;font-size:.72rem;opacity:.7}
+.card{padding:2rem;border:1px solid rgba(255,255,255,.08);border-radius:24px;background:rgba(255,255,255,.03)}
+table{color:inherit}
 </style>
 ''', unsafe_allow_html=True)
 
-# ---------- SIDEBAR ----------
-st.sidebar.markdown("# NOOK")
-st.sidebar.caption("CONTROL ROOM / FOUNDER")
-page = st.sidebar.radio('Navigate', ['Dashboard','Waitlist','Members','Facilitators','Events','Insights','Payments','Settings'])
+mode = st.sidebar.radio('Mode',['Public Website','Founder Portal'])
 
-# ---------- DASHBOARD ----------
-if page == 'Dashboard':
-    st.markdown("<div class='micro'>bhopal / invite only / social architecture</div>", unsafe_allow_html=True)
-    st.markdown("<div class='hero'>CONTROL ROOM</div><div class='card'><h3>FROM ROUTINE HANGOUTS TO REAL CONNECTIONS — WE'RE WITH YOU EVERY STEP</h3><p class='soft'>Private social experiences designed for people who want more than random plans.</p></div>", unsafe_allow_html=True)
-    c1,c2,c3,c4 = st.columns(4)
-    stats = [('128','Members'),('₹42K','Revenue'),('03','Live Events'),('87%','Retention')]
-    for col,(v,l) in zip([c1,c2,c3,c4],stats):
-        with col:
-            st.markdown(f"<div class='card'><div class='metric'>{v}</div><div class='micro'>{l}</div></div>", unsafe_allow_html=True)
-    a,b = st.columns([1.4,1])
-    with a:
-        st.markdown("<div class='card'><h3>ROOM SIGNAL</h3><p class='soft'>Creative leaning. Members ready to gather. Low social fatigue. High curiosity.</p></div>", unsafe_allow_html=True)
-        st.markdown("<div class='card'><h3>FOUNDER NOTES</h3><p class='soft'>Canvas Night nearly sold out. Approve 2 strong applicants. Push referral wave next week.</p></div>", unsafe_allow_html=True)
-    with b:
-        st.markdown("<div class='card'><h3>NEXT EXPERIENCE</h3><div class='metric'>CANVAS NIGHT</div><p>Sat / MP Nagar / 8 Seats</p></div>", unsafe_allow_html=True)
+# ---------- PUBLIC WEBSITE ----------
+if mode == 'Public Website':
+    st.markdown("""
+    <section class='hero'>
+      <div>
+        <div class='small'>NOOK / PRIVATE SOCIAL CLUB</div>
+        <h1>BUILD THE SOCIAL LIFE YOU'VE BEEN WANTING</h1>
+        <p>Curated gatherings, meaningful rooms, and elevated weekends for people who want more than random plans.</p>
+        <br><a class='btn'>Apply For Access</a>
+      </div>
+    </section>
+    <section class='section cream'>
+      <div class='grid2'>
+        <div>
+          <div class='title'>Build a richer social life in 30 days — without burnout.</div>
+          <p>Small intentional circles. Better people. Better energy. Better stories.</p>
+        </div>
+        <div>
+          <div class='card'>Private dinners<br><br>Creative nights<br><br>Curated walks<br><br>Members only rooms</div>
+        </div>
+      </div>
+    </section>
+    <section class='section wine'>
+      <div class='grid2'>
+        <div class='card'>[ editorial image space ]</div>
+        <div>
+          <div class='title'>Meet Nook</div>
+          <p>Nook exists for people tired of shallow plans, passive weekends, and low-quality social circles.</p>
+          <a class='btn'>Why We Built This</a>
+        </div>
+      </div>
+    </section>
+    <section class='section cream'>
+      <div class='small'>Featured In Spirit</div>
+      <div class='title'>Vogue • Monocle • Forbes • Culture</div>
+    </section>
+    """, unsafe_allow_html=True)
 
-# ---------- WAITLIST ----------
-elif page == 'Waitlist':
-    st.markdown("# WAITLIST")
-    df = st.session_state.members[st.session_state.members['Status'].isin(['Pending','Waitlist'])]
-    st.dataframe(df, use_container_width=True)
-    st.markdown('### Review Applicant')
-    names = df['Name'].tolist() if not df.empty else []
-    if names:
-        pick = st.selectbox('Select applicant', names)
-        c1,c2,c3 = st.columns(3)
-        if c1.button('Approve'):
-            st.session_state.members.loc[st.session_state.members['Name']==pick,'Status']='Approved'
-        if c2.button('Waitlist'):
-            st.session_state.members.loc[st.session_state.members['Name']==pick,'Status']='Waitlist'
-        if c3.button('Decline'):
-            st.session_state.members.loc[st.session_state.members['Name']==pick,'Status']='Declined'
-        st.success('Status updated')
-
-# ---------- MEMBERS ----------
-elif page == 'Members':
-    st.markdown("# MEMBERS")
-    search = st.text_input('Search member')
-    df = st.session_state.members.copy()
-    if search:
-        df = df[df['Name'].str.contains(search, case=False)]
-    st.dataframe(df, use_container_width=True)
-    st.markdown('### Add Member')
-    with st.form('add_member'):
-        n1,n2,n3 = st.columns(3)
-        name = n1.text_input('Name')
-        tier = n2.selectbox('Tier',['First Out','IBP','Worth It','YHTTB'])
-        avail = n3.text_input('Availability')
-        if st.form_submit_button('Add Member'):
-            st.session_state.members.loc[len(st.session_state.members)] = [name,'Approved',tier,0,avail]
-            st.success('Member added')
-
-# ---------- FACILITATORS ----------
-elif page == 'Facilitators':
-    st.markdown('# FACILITATORS')
-    fac = pd.DataFrame([
-        ['Riya Kapoor','Active','Worth It',4],
-        ['Aryan Mehta','Candidate','IBP',2],
-        ['Sneha Joshi','Active','YHTTB',6]
-    ], columns=['Name','Status','Access','Sessions'])
-    st.dataframe(fac, use_container_width=True)
-    st.markdown("<div class='card'><h3>TEAM NOTE</h3><p class='soft'>Sneha should host next intimate dinner. Aryan needs one more shadow session.</p></div>", unsafe_allow_html=True)
-
-# ---------- EVENTS ----------
-elif page == 'Events':
-    st.markdown('# EVENTS')
+    st.markdown("<div class='section'><div class='title'>Upcoming Experiences</div></div>", unsafe_allow_html=True)
     st.dataframe(st.session_state.events, use_container_width=True)
-    st.markdown('### Build Experience')
-    with st.form('event_form'):
-        c1,c2,c3 = st.columns(3)
-        ename = c1.text_input('Event Name')
-        edate = c2.date_input('Date', value=date.today())
-        venue = c3.text_input('Venue')
-        c4,c5,c6 = st.columns(3)
-        seats = c4.number_input('Seats',4,30,8)
-        price = c5.number_input('Price',100,5000,499)
-        status = c6.selectbox('Status',['Planned','Live','Closed'])
-        if st.form_submit_button('Create Event'):
-            st.session_state.events.loc[len(st.session_state.events)] = [ename,str(edate),venue,seats,price,status]
-            st.success('Experience created')
 
-# ---------- INSIGHTS ----------
-elif page == 'Insights':
-    st.markdown('# INSIGHTS')
-    df = pd.DataFrame({'Month':['Jan','Feb','Mar','Apr','May'],'Revenue':[12000,18000,26000,42000,51000]})
-    st.line_chart(df.set_index('Month'))
-    st.markdown("<div class='card'><h3>INTELLIGENCE</h3><p class='soft'>Retention strongest after small-group curated nights. Premium pricing accepted when storytelling is strong.</p></div>", unsafe_allow_html=True)
-
-# ---------- PAYMENTS ----------
-elif page == 'Payments':
-    st.markdown('# PAYMENTS')
-    c1,c2 = st.columns(2)
-    with c1:
-        st.markdown("<div class='card'><div class='metric'>₹42,000</div><div class='micro'>This Month</div></div>", unsafe_allow_html=True)
-    with c2:
-        st.markdown("<div class='card'><div class='metric'>12</div><div class='micro'>Transactions</div></div>", unsafe_allow_html=True)
-    pay = pd.DataFrame({'Member':['Kabir','Ishita','Naina'],'Amount':[499,799,299],'Status':['Paid','Paid','Pending']})
-    st.dataframe(pay,use_container_width=True)
-
-# ---------- SETTINGS ----------
-elif page == 'Settings':
-    st.markdown('# SETTINGS')
-    st.text_input('Google Sheet URL')
-    st.text_input('Supabase URL')
-    st.text_input('Admin Email')
-    st.toggle('Invite Only Mode', value=True)
-    st.toggle('Accept Applications', value=True)
-    st.button('Save Configuration', type='primary')
-    st.markdown("<div class='card'><h3>SYSTEM MODE</h3><p class='soft'>Luxury brutalist UI active. Founder access only.</p></div>", unsafe_allow_html=True)
-
-st.markdown("<div class='micro' style='text-align:center;padding:2rem 0'>built quietly / nook</div>", unsafe_allow_html=True)
+# ---------- FOUNDER PORTAL ----------
+else:
+    st.title('Founder Portal')
+    page = st.radio('Navigate',['Members','Waitlist','Events','Settings'], horizontal=True)
+    if page == 'Members':
+        st.dataframe(st.session_state.members, use_container_width=True)
+    elif page == 'Waitlist':
+        st.dataframe(st.session_state.members[st.session_state.members['Status']=='Waitlist'], use_container_width=True)
+    elif page == 'Events':
+        st.dataframe(st.session_state.events, use_container_width=True)
+        with st.form('new_event'):
+            a,b,c = st.columns(3)
+            ex = a.text_input('Experience')
+            dy = b.text_input('Day')
+            lo = c.text_input('Location')
+            if st.form_submit_button('Add Experience'):
+                st.session_state.events.loc[len(st.session_state.events)] = [ex,dy,lo]
+                st.success('Added')
+    else:
+        st.text_input('Admin Email')
+        st.toggle('Invite Only', True)
+        st.button('Save')
