@@ -1,88 +1,73 @@
 import streamlit as st
-import plotly.express as px
 import pandas as pd
-import time
+import plotly.express as px
 
 st.set_page_config(page_title='Nook Control Room V2', layout='wide', initial_sidebar_state='expanded')
 
+# ---------- DATA ----------
+if 'members' not in st.session_state:
+    st.session_state.members = pd.DataFrame([
+        ['Kabir','Pending','First Out',2],['Ishita','Approved','IBP',5],['Dev','Waitlist','First Out',0],['Naina','Approved','Worth It',6]
+    ], columns=['Name','Status','Tier','Sessions'])
+
+# ---------- UI ----------
 st.markdown('''
 <style>
-section[data-testid="stSidebar"]{background:#050505;border-right:1px solid rgba(255,255,255,.06);} 
-section[data-testid="stSidebar"] *{color:#fff;} 
-button[kind="primary"]{background:#F04E23!important;border:none!important;border-radius:999px!important;} 
 @import url("https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;700;900&display=swap");
-html, body, [class*="css"] {background:#0A0A0A;color:#F5F5F5;font-family:Inter,sans-serif;}
-.block-container{padding-top:1rem;padding-bottom:1rem;max-width:1400px;}
-.metric{border-top:6px solid #F04E23;padding:1rem;background:#111;margin-bottom:1rem;}
-.big{font-family:Anton,sans-serif;font-size:5rem;line-height:0.9;letter-spacing:1px;}
-.hero{font-family:Anton,sans-serif;font-size:8rem;line-height:0.85;margin:0;}
-.micro{font-size:.75rem;letter-spacing:.25em;color:#aaa;text-transform:uppercase;}
-.panel{background:#f3f3f3;color:#000;padding:1.2rem;min-height:280px;}
-.panel-dark{background:#111;color:#fff;padding:1.2rem;min-height:280px;border-left:6px solid #F04E23;}
-.smallhead{font-family:Anton,sans-serif;font-size:2.5rem;line-height:1;}
-.nav{position:fixed;top:0;left:0;width:100%;height:8px;background:#F04E23;z-index:999;}
+html,body,[class*='css']{background:#050505;color:#fff;font-family:Inter,sans-serif}
+section[data-testid='stSidebar']{background:#0b0b0b;border-right:1px solid rgba(255,255,255,.08)}
+.block-container{padding-top:1rem;max-width:1450px}
+.hero{font-family:Anton,sans-serif;font-size:5rem;line-height:.9;margin:0}
+.micro{font-size:.72rem;letter-spacing:.22em;color:#9a9a9a;text-transform:uppercase}
+.card{background:linear-gradient(135deg,#111,#0a0a0a);border:1px solid rgba(255,255,255,.08);border-radius:22px;padding:1.2rem;margin-bottom:1rem}
+.metric{font-family:Anton,sans-serif;font-size:3rem;color:#F04E23;line-height:1}
+.orange{color:#F04E23}
+button[kind='primary']{background:#F04E23!important;border:none!important;border-radius:999px!important}
 </style>
-<div class='nav'></div>
 ''', unsafe_allow_html=True)
 
-page = st.sidebar.radio('navigation',['dashboard','people','incoming','events','insights','payments','settings'])
-st.sidebar.markdown('### nook')
-st.sidebar.caption('founder mode')
+# ---------- SIDEBAR ----------
+page = st.sidebar.radio('Navigation', ['Dashboard','People','Incoming','Events','Insights','Payments','Settings'])
+st.sidebar.caption('Founder Mode')
 
-st.markdown("<p class='micro'>bhopal / live / membership engine / social architecture</p>", unsafe_allow_html=True)
-if page=='dashboard':
-st.markdown("<h1 class='hero'>CONTROL ROOM</h1>", unsafe_allow_html=True)
+# ---------- DASHBOARD ----------
+if page == 'Dashboard':
+    st.markdown("<div class='micro'>bhopal / live / control room</div>", unsafe_allow_html=True)
+    st.markdown("<h1 class='hero'>CONTROL ROOM</h1>", unsafe_allow_html=True)
+    c1,c2,c3=st.columns(3)
+    for c,v,l in [(c1,'128','members inside'),(c2,'₹42K','monthly revenue'),(c3,'03','events this week')]:
+        with c:
+            st.markdown(f"<div class='card'><div class='metric'>{v}</div><div class='micro'>{l}</div></div>", unsafe_allow_html=True)
+    st.markdown("<div class='card'><b class='orange'>Room Signal</b><br>creative leaning · ready to gather · low fatigue</div>", unsafe_allow_html=True)
 
-c1,c2,c3=st.columns(3)
-for col,val,label in [(c1,'128','members inside'),(c2,'₹42K','this month'),(c3,'03','nights this week')]:
-    with col:
-        st.markdown(f"<div class='metric'><div class='big'>{val}</div><div class='micro'>{label}</div></div>", unsafe_allow_html=True)
-
-l,r=st.columns([1.2,1])
-with l:
-    st.markdown("<div class='panel'><div class='smallhead'>INCOMING ENERGY</div><br><b>17 pending applications</b><br><br>Most common intent: looking for real people, not random plans.<br><br><span class='micro'>approve / waitlist / observe</span></div>", unsafe_allow_html=True)
-with r:
-    st.markdown("<div class='panel-dark'><div class='smallhead'>NEXT EVENT</div><br><b>CANVAS NIGHT</b><br>Saturday · 8 seats · 87% matched<br><br>Hidden facilitator assigned.<br><br><span class='micro'>mp nagar / chai after</span></div>", unsafe_allow_html=True)
-
-st.markdown("<br>", unsafe_allow_html=True)
-
-c1,c2=st.columns(2)
-with c1:
-    st.markdown("<div class='panel-dark'><div class='smallhead'>SPACE HOLDERS</div><br>Riya · Holding<br>Tanya · Available<br>Dev · Session prep</div>", unsafe_allow_html=True)
-with c2:
-    st.markdown("<div class='panel'><div class='smallhead'>ROOM SIGNAL</div><br>creative leaning<br>low social fatigue<br>ready to gather</div>", unsafe_allow_html=True)
-
-
-if page=='people':
+elif page == 'People':
     st.markdown("<h1 class='hero'>PEOPLE</h1>", unsafe_allow_html=True)
-    c1,c2=st.columns(2)
-    with c1: st.markdown("<div class='panel'><div class='smallhead'>KABIR</div>quiet energy<br>first out<br>2 sessions</div>", unsafe_allow_html=True)
-    with c2: st.markdown("<div class='panel-dark'><div class='smallhead'>ISHITA</div>expressive<br>ibp<br>5 sessions</div>", unsafe_allow_html=True)
+    st.dataframe(st.session_state.members, use_container_width=True)
 
-if page=='incoming':
+elif page == 'Incoming':
     st.markdown("<h1 class='hero'>INCOMING</h1>", unsafe_allow_html=True)
-    st.markdown("<div class='panel-dark'><div class='smallhead'>17 PENDING</div>Most applicants seek meaningful social plans.</div>", unsafe_allow_html=True)
+    df = st.session_state.members[st.session_state.members['Status'].isin(['Pending','Waitlist'])]
+    st.dataframe(df, use_container_width=True)
 
-if page=='events':
+elif page == 'Events':
     st.markdown("<h1 class='hero'>EVENTS</h1>", unsafe_allow_html=True)
-    st.markdown("<div class='panel'><div class='smallhead'>CANVAS NIGHT</div>sat · 8 seats · sold 6</div>", unsafe_allow_html=True)
-    st.markdown("<div class='panel-dark'><div class='smallhead'>ROOFTOP CHAI</div>thu · 10 seats · live</div>", unsafe_allow_html=True)
+    st.markdown("<div class='card'><div class='metric'>CANVAS NIGHT</div>Sat · 8 Seats · Hidden facilitator assigned</div>", unsafe_allow_html=True)
+    st.markdown("<div class='card'><div class='metric'>ROOFTOP CHAI</div>Thu · 10 Seats · Live now</div>", unsafe_allow_html=True)
 
-if page=='insights':
+elif page == 'Insights':
     st.markdown("<h1 class='hero'>INSIGHTS</h1>", unsafe_allow_html=True)
-    df=pd.DataFrame({'month':['jan','feb','mar','apr'],'revenue':[12000,18000,26000,42000]})
-    fig=px.line(df,x='month',y='revenue',markers=True)
-    fig.update_layout(paper_bgcolor='#0A0A0A',plot_bgcolor='#0A0A0A',font_color='white')
+    df=pd.DataFrame({'Month':['Jan','Feb','Mar','Apr'],'Revenue':[12000,18000,26000,42000]})
+    fig=px.area(df,x='Month',y='Revenue')
+    fig.update_layout(paper_bgcolor='#050505',plot_bgcolor='#050505',font_color='white')
     st.plotly_chart(fig,use_container_width=True)
 
-if page=='payments':
+elif page == 'Payments':
     st.markdown("<h1 class='hero'>PAYMENTS</h1>", unsafe_allow_html=True)
-    st.markdown("<div class='panel'><div class='smallhead'>₹42K COLLECTED</div>12 successful payments this month.</div>", unsafe_allow_html=True)
+    st.markdown("<div class='card'><div class='metric'>₹42,000</div>Collected this month</div>", unsafe_allow_html=True)
 
-if page=='settings':
+elif page == 'Settings':
     st.markdown("<h1 class='hero'>SETTINGS</h1>", unsafe_allow_html=True)
-    st.text_input('sheet url')
-    st.button('sync now')
+    st.text_input('Google Sheet URL')
+    st.button('Sync Now', type='primary')
 
-st.markdown("---")
-st.markdown("<p class='micro' style='text-align:center'>built quietly · bhopal</p>", unsafe_allow_html=True)
+st.markdown("<div class='micro' style='text-align:center;padding:2rem 0'>built quietly · bhopal</div>", unsafe_allow_html=True)
