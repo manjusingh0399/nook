@@ -23,18 +23,18 @@ if 'events' not in st.session_state:
 st.markdown('''
 <style>
 @import url("https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;600;800&display=swap");
-html,body,[class*='css']{background:#0a0a0a;color:#f5f2ea;font-family:Inter,sans-serif}
-section[data-testid='stSidebar']{background:#050505;border-right:2px solid #1a1a1a}
+html,body,[class*='css']{background:#020202;color:#f5f2ea;font-family:Inter,sans-serif}
+section[data-testid='stSidebar']{background:#050505;border-right:2px solid #2a0000}
 .block-container{max-width:1500px;padding-top:1rem}
 h1,h2,h3{font-family:Anton,sans-serif;letter-spacing:.03em}
 .hero{font-size:5.5rem;line-height:.9;margin:0;color:#f5f2ea}
 .micro{font-size:.72rem;letter-spacing:.28em;text-transform:uppercase;color:#8d8d8d}
-.card{background:#111;border:2px solid #222;padding:1.1rem;border-radius:0;margin-bottom:1rem}
-.metric{font-family:Anton,sans-serif;font-size:3.2rem;line-height:1;color:#E05C1A}
+.card{background:linear-gradient(135deg,#5a0000,#a30000);border:1px solid rgba(255,255,255,.08);padding:1.25rem;border-radius:0;margin-bottom:1rem;box-shadow:0 0 40px rgba(180,0,0,.18)}
+.metric{font-family:Anton,sans-serif;font-size:3.2rem;line-height:1;color:#fff}
 .soft{color:#9d9d9d}
-.orange{color:#E05C1A}
+.orange{color:#ffb3a7}
 div[data-testid='stDataFrame']{border:2px solid #222}
-button[kind='primary']{background:#E05C1A!important;border:none!important;border-radius:0!important}
+button[kind='primary']{background:#b30000!important;border:none!important;border-radius:0!important;color:#fff!important}
 .stButton>button{border-radius:0!important;border:2px solid #222!important}
 </style>
 ''', unsafe_allow_html=True)
@@ -47,7 +47,7 @@ page = st.sidebar.radio('Navigate', ['Dashboard','Waitlist','Members','Facilitat
 # ---------- DASHBOARD ----------
 if page == 'Dashboard':
     st.markdown("<div class='micro'>bhopal / invite only / social architecture</div>", unsafe_allow_html=True)
-    st.markdown("<div class='hero'>CONTROL ROOM</div>", unsafe_allow_html=True)
+    st.markdown("<div class='hero'>CONTROL ROOM</div><div class='card'><h3>FROM ROUTINE HANGOUTS TO REAL CONNECTIONS — WE'RE WITH YOU EVERY STEP</h3><p class='soft'>Private social experiences designed for people who want more than random plans.</p></div>", unsafe_allow_html=True)
     c1,c2,c3,c4 = st.columns(4)
     stats = [('128','Members'),('₹42K','Revenue'),('03','Live Events'),('87%','Retention')]
     for col,(v,l) in zip([c1,c2,c3,c4],stats):
