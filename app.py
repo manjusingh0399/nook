@@ -22,20 +22,24 @@ if 'events' not in st.session_state:
 # ---------- STYLES ----------
 st.markdown('''
 <style>
-@import url("https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;600;800&display=swap");
-html,body,[class*='css']{background:#020202;color:#f5f2ea;font-family:Inter,sans-serif}
-section[data-testid='stSidebar']{background:#050505;border-right:2px solid #2a0000}
-.block-container{max-width:1500px;padding-top:1rem}
-h1,h2,h3{font-family:Anton,sans-serif;letter-spacing:.03em}
-.hero{font-size:5.5rem;line-height:.9;margin:0;color:#f5f2ea}
-.micro{font-size:.72rem;letter-spacing:.28em;text-transform:uppercase;color:#8d8d8d}
-.card{background:linear-gradient(135deg,#5a0000,#a30000);border:1px solid rgba(255,255,255,.08);padding:1.25rem;border-radius:0;margin-bottom:1rem;box-shadow:0 0 40px rgba(180,0,0,.18)}
-.metric{font-family:Anton,sans-serif;font-size:3.2rem;line-height:1;color:#fff}
-.soft{color:#9d9d9d}
-.orange{color:#ffb3a7}
-div[data-testid='stDataFrame']{border:2px solid #222}
-button[kind='primary']{background:#b30000!important;border:none!important;border-radius:0!important;color:#fff!important}
-.stButton>button{border-radius:0!important;border:2px solid #222!important}
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap");
+html,body,[class*='css']{background:#050505;color:#f5f2ea;font-family:Inter,sans-serif}
+section[data-testid='stSidebar']{background:#050505;border-right:1px solid rgba(255,255,255,.08)}
+.block-container{max-width:1450px;padding-top:1rem;padding-bottom:3rem}
+h1,h2,h3{font-weight:800;letter-spacing:-0.03em}
+.hero{font-size:5.8rem;line-height:.9;margin:0}
+.micro{font-size:.72rem;letter-spacing:.24em;text-transform:uppercase;color:#8c8c8c}
+.section{padding:2.5rem 0;border-top:1px solid rgba(255,255,255,.07)}
+.panel{padding:2rem;border-radius:28px;background:radial-gradient(circle at top right, rgba(180,0,0,.22), transparent 30%),linear-gradient(180deg,#0c0c0c,#080808)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-top:1.2rem}
+.stat{padding:1rem 0;border-top:1px solid rgba(255,255,255,.1)}
+.metric{font-size:3rem;font-weight:800;line-height:1}
+.label{font-size:.72rem;letter-spacing:.22em;color:#8c8c8c;text-transform:uppercase}
+.soft{color:#b0b0b0;line-height:1.7}
+.line{height:1px;background:rgba(255,255,255,.08);margin:1rem 0}
+div[data-testid='stDataFrame']{border:1px solid rgba(255,255,255,.08);border-radius:16px;overflow:hidden}
+button[kind='primary']{background:#9d0000!important;border:none!important;border-radius:999px!important}
+.stButton>button{border-radius:999px!important}
 </style>
 ''', unsafe_allow_html=True)
 
